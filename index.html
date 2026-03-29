@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0c0c14">
+    <title>REP Hours Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#0c0c14;--bg-card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);
+            --border-light:rgba(255,255,255,0.1);--text:#f0f0f0;--text-dim:rgba(255,255,255,0.55);
+            --text-muted:rgba(255,255,255,0.35);--text-faint:rgba(255,255,255,0.2);
+            --accent:#6366f1;--accent-light:#818cf8;--accent-soft:#a5b4fc;
+            --accent-glow:rgba(99,102,241,0.3);--green:#34d399;--yellow:#fbbf24;--red:#f87171;
+            --font:'DM Sans',-apple-system,sans-serif;--mono:'JetBrains Mono',monospace;
+        }
+        html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow:hidden}
+        #root{height:100%}
+        input,select,textarea,button{font-family:var(--font)}
+        input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7)}
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        .fu{animation:fadeUp .35s ease both}.fu1{animation-delay:.05s}.fu2{animation-delay:.1s}.fu3{animation-delay:.15s}
+        .tap{transition:transform .1s,opacity .1s}.tap:active{transform:scale(.97);opacity:.8}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback,useRef}=React;
+const API='/api';
+const CATS=[
+    {id:'property_mgmt',label:'Property Management',icon:'🏠'},
+    {id:'repairs',label:'Repairs & Maintenance',icon:'🔧'},
+    {id:'construction',label:'Construction / Improvements',icon:'🏗️'},
+    {id:'travel',label:'Travel (NJ ↔ NC)',icon:'🚗'},
+    {id:'bookings',label:'Booking & Guest Mgmt',icon:'📅'},
+    {id:'records',label:'Records & Accounting',icon:'📋'},
+    {id:'cleaning',label:'Cleaning & Turnover',icon:'🧹'},
+    {id:'communication',label:'Calls / Emails / Texts',icon:'📞'},
+    {id:'shopping',label:'Shopping for Properties',icon:'🛒'},
+    {id:'inspection',label:'Inspections & Walkthroughs',icon:'🔍'},
+    {id:'other',label:'Other RE Activity',icon:'📝'},
+];
+const PROPS=[{id:'all',label:'All Properties'},{id:'salt_house',label:'Salt House'},{id:'kdh',label:'KDH'},{id:'lighthouse',label:'Lighthouse'}];
+const GOAL=750;
+const getToken=()=>localStorage.getItem('rep_token');
+const setToken=t=>localStorage.setItem('rep_token',t);
+const clearToken=()=>localStorage.removeItem('rep_token');
+
+async function api(ep,opts={}){
+    const t=getToken();
+    const r=await fetch(`${API}/${ep}`,{...opts,headers:{'Content-Type':'application/json',...(t?{Authorization:`Bearer ${t}`}:{}),...opts.headers}});
+    if(r.status===401){clearToken();location.reload();return null}
+    if(r.headers.get('content-type')?.includes('text/csv')){
+        const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');
+        a.href=u;a.download=`REP_Hours_${new Date().getFullYear()}.csv`;a.click();URL.revokeObjectURL(u);return{success:true};
+    }
+    return r.json();
+}
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fmtDate=s=>{const d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'})};
+const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return mn>0?`${hr}h ${mn}m`:`${hr}h`};
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── Login ──
+function Login({onLogin}){
+    const[pw,setPw]=useState('');const[err,setErr]=useState('');const[ld,setLd]=useState(false);
+    const go=async()=>{setLd(true);setErr('');try{const r=await api('auth',{method:'POST',body:JSON.stringify({password:pw})});if(r?.token){setToken(r.token);onLogin()}else setErr('Invalid password')}catch(e){setErr('Connection error')}setLd(false)};
+    return(<div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'radial-gradient(ellipse at 50% 30%,rgba(99,102,241,.08) 0%,transparent 60%),var(--bg)'}}>
+        <div className="fu" style={{width:'100%',maxWidth:360,textAlign:'center'}}>
+            <div style={{fontSize:40,marginBottom:8}}>🏡</div>
+            <h1 style={{fontSize:22,fontWeight:700,letterSpacing:-.5,marginBottom:4}}>REP Hours</h1>
+            <p style={{fontSize:12,color:'var(--text-muted)',letterSpacing:1.5,textTransform:'uppercase',marginBottom:32}}>Real Estate Professional Log</p>
+            <input type="password" placeholder="Password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus
+                style={{width:'100%',padding:'14px 18px',borderRadius:12,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:16,outline:'none',marginBottom:12,boxSizing:'border-box'}}/>
+            <button onClick={go} disabled={ld} className="tap" style={{width:'100%',padding:14,borderRadius:12,border:'none',background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:'0 4px 24px var(--accent-glow)',opacity:ld?.6:1}}>
+                {ld?'Signing in…':'Sign In'}</button>
+            {err&&<p style={{marginTop:12,fontSize:13,color:'var(--red)'}}>{err}</p>}
+        </div></div>);
+}
+
+// ── Progress Ring ──
+function Ring({cur,goal,year}){
+    const pct=Math.min(cur/goal,1),r=78,c=Math.PI*2*r,off=c-pct*c;
+    const now=new Date(),isCur=now.getFullYear()===year;
+    const doy=isCur?Math.floor((now-new Date(year,0,1))/864e5)+1:365;
+    const onTrack=pct>=(doy/365)*.85;
+    const color=pct>=1?'var(--green)':onTrack?'var(--yellow)':'var(--red)';
+    const rem=Math.max(0,goal-cur);
+    const wks=isCur?Math.max(1,Math.ceil((new Date(year,11,31)-now)/(864e5*7))):0;
+    return(<div style={{textAlign:'center'}}>
+        <div style={{position:'relative',width:186,height:186,margin:'0 auto 16px'}}>
+            <svg width="186" height="186" viewBox="0 0 186 186">
+                <circle cx="93" cy="93" r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="10"/>
+                <circle cx="93" cy="93" r={r} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
+                    strokeDasharray={c} strokeDashoffset={off} transform="rotate(-90 93 93)" style={{transition:'stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)'}}/>
+            </svg>
+            <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                <span style={{fontFamily:'var(--mono)',fontSize:34,fontWeight:700}}>{cur.toFixed(1)}</span>
+                <span style={{fontSize:12,color:'var(--text-muted)',letterSpacing:1}}>of {goal} hrs</span>
+                {pct>=1&&<span style={{fontSize:11,color:'var(--green)',fontWeight:700,marginTop:2,letterSpacing:1}}>✓ GOAL MET</span>}
+            </div>
+        </div>
+        {rem>0&&isCur&&<div style={{padding:'10px 16px',borderRadius:10,background:color+'11',border:`1px solid ${color}22`,fontSize:13,color:color+'cc'}}>
+            {rem.toFixed(1)} hrs remaining · ~{(rem/wks).toFixed(1)} hrs/week</div>}
+    </div>);
+}
+
+// ── Monthly Chart ──
+function MChart({monthly}){
+    const d=Array.from({length:12},(_,i)=>{const f=monthly.find(m=>m.month===i+1);return f?parseFloat(f.total):0});
+    const mx=Math.max(...d,1);
+    return(<div style={{display:'flex',alignItems:'flex-end',gap:5,height:90}}>
+        {d.map((v,i)=><div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
+            <div style={{width:'100%',maxWidth:30,borderRadius:4,height:Math.max(3,(v/mx)*68),
+                background:v>0?'linear-gradient(to top,var(--accent),var(--accent-light))':'rgba(255,255,255,.04)',
+                transition:'height .5s ease'}} title={`${MN[i]}: ${v.toFixed(1)}h`}/>
+            <span style={{fontSize:9,color:'var(--text-faint)'}}>{MN[i].charAt(0)}</span>
+        </div>)}
+    </div>);
+}
+
+// ── Entry Form ──
+function EForm({onSave,edit,onCancel}){
+    const[dt,setDt]=useState(edit?.entry_date||today());
+    const[hr,setHr]=useState(edit?String(Math.floor(parseFloat(edit.hours))):'');
+    const[mn,setMn]=useState(edit?String(edit.minutes||Math.round((parseFloat(edit.hours)%1)*60)):'');
+    const[cat,setCat]=useState(edit?.category||'');
+    const[prop,setProp]=useState(edit?.property||'all');
+    const[desc,setDesc]=useState(edit?.description||'');
+    const[mi,setMi]=useState(edit?.mileage?String(edit.mileage):'');
+    const[sv,setSv]=useState(false);
+    useEffect(()=>{if(edit){setDt(edit.entry_date);setHr(String(Math.floor(parseFloat(edit.hours))));setMn(String(edit.minutes||Math.round((parseFloat(edit.hours)%1)*60)));setCat(edit.category);setProp(edit.property);setDesc(edit.description);setMi(edit.mileage?String(edit.mileage):'');}else{reset()}},[edit]);
+    const reset=()=>{setDt(today());setHr('');setMn('');setCat('');setDesc('');setMi('')};
+    const go=async()=>{const h=parseFloat(hr||'0'),m=parseFloat(mn||'0'),tot=h+m/60;if(!dt||tot<=0||!cat)return;setSv(true);
+        const p={entry_date:dt,hours:tot,minutes:m,category:cat,property:prop,description:desc,mileage:mi?parseFloat(mi):null};
+        if(edit){p.id=edit.id;await api('entries',{method:'PUT',body:JSON.stringify(p)})}
+        else{await api('entries',{method:'POST',body:JSON.stringify(p)})}
+        setSv(false);onSave();if(!edit)reset()};
+    const IS={width:'100%',padding:'12px 14px',borderRadius:10,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:15,outline:'none',boxSizing:'border-box'};
+    const LS={fontSize:11,color:'var(--text-muted)',marginBottom:5,display:'block',letterSpacing:.8,textTransform:'uppercase'};
+    return(<div className="fu" style={{background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20}}>
+        <div style={{fontSize:16,fontWeight:600,marginBottom:18}}>{edit?'Edit Entry':'Log Activity'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:16}}>
+            <div><label style={LS}>Date</label><input type="date" value={dt} onChange={e=>setDt(e.target.value)} style={IS}/></div>
+            <div><label style={LS}>Hours</label><input type="number" inputMode="numeric" min="0" max="24" placeholder="0" value={hr} onChange={e=>setHr(e.target.value)} style={IS}/></div>
+            <div><label style={LS}>Minutes</label><input type="number" inputMode="numeric" min="0" max="59" step="5" placeholder="0" value={mn} onChange={e=>setMn(e.target.value)} style={IS}/></div>
+        </div>
+        <div style={{marginBottom:16}}><label style={LS}>Activity</label>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:6}}>
+                {CATS.map(c=><button key={c.id} onClick={()=>setCat(c.id)} className="tap" style={{padding:'9px 10px',borderRadius:9,
+                    border:`1px solid ${cat===c.id?'var(--accent)':'var(--border)'}`,
+                    background:cat===c.id?'rgba(99,102,241,.12)':'var(--bg-card)',
+                    color:cat===c.id?'var(--accent-soft)':'var(--text-dim)',
+                    fontSize:13,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:7,transition:'all .15s'}}>
+                    <span style={{fontSize:15,flexShrink:0}}>{c.icon}</span><span style={{lineHeight:1.2}}>{c.label}</span>
+                </button>)}
+            </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:cat==='travel'?'1fr 1fr':'1fr',gap:10,marginBottom:16}}>
+            <div><label style={LS}>Property</label><select value={prop} onChange={e=>setProp(e.target.value)} style={{...IS,appearance:'auto'}}>
+                {PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+            {cat==='travel'&&<div><label style={LS}>Mileage</label><input type="number" inputMode="decimal" placeholder="Round-trip miles" value={mi} onChange={e=>setMi(e.target.value)} style={IS}/></div>}
+        </div>
+        <div style={{marginBottom:16}}><label style={LS}>Description</label>
+            <textarea rows={3} placeholder="Be specific — this is your IRS documentation…" value={desc} onChange={e=>setDesc(e.target.value)} style={{...IS,resize:'vertical',lineHeight:1.5}}/></div>
+        <div style={{display:'flex',gap:10}}>
+            <button onClick={go} disabled={sv} className="tap" style={{flex:1,padding:'14px 20px',borderRadius:12,border:'none',background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:'0 4px 24px var(--accent-glow)',opacity:sv?.6:1}}>
+                {sv?'Saving…':edit?'Update Entry':'✓ Log Hours'}</button>
+            {edit&&<button onClick={onCancel} className="tap" style={{padding:'14px 20px',borderRadius:12,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:15,cursor:'pointer'}}>Cancel</button>}
+        </div>
+    </div>);
+}
+
+// ── Entry Row ──
+function ERow({e,onEdit,onDel}){
+    const[cf,setCf]=useState(false);
+    const ct=CATS.find(c=>c.id===e.category);const pr=PROPS.find(p=>p.id===e.property);
+    if(cf)return(<div style={{padding:14,borderRadius:11,background:'rgba(248,113,113,.06)',border:'1px solid rgba(248,113,113,.15)',textAlign:'center',marginBottom:8}}>
+        <p style={{fontSize:13,color:'var(--text-dim)',margin:'0 0 10px'}}>Delete this entry?</p>
+        <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+            <button onClick={()=>onDel(e.id)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'none',background:'var(--red)',color:'#fff',fontSize:13,cursor:'pointer'}}>Delete</button>
+            <button onClick={()=>setCf(false)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:13,cursor:'pointer'}}>Cancel</button>
+        </div></div>);
+    return(<div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:11,background:'var(--bg-card)',border:'1px solid var(--border)',marginBottom:8}}>
+        <span style={{fontSize:22,flexShrink:0}}>{ct?.icon||'📝'}</span>
+        <div style={{flex:1,minWidth:0}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+                <span style={{fontSize:14,fontWeight:600,color:'#e8e8e8'}}>{ct?.label}</span>
+                <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:700,color:'var(--accent-soft)',flexShrink:0}}>{fmtH(parseFloat(e.hours))}</span>
+            </div>
+            <div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>
+                {fmtDate(e.entry_date)}{e.property!=='all'&&<span> · {pr?.label}</span>}{e.mileage&&<span> · {e.mileage} mi</span>}
+            </div>
+            {e.description&&<div style={{fontSize:12,color:'var(--text-faint)',marginTop:4,lineHeight:1.4}}>{e.description}</div>}
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+            <button onClick={()=>onEdit(e)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'var(--text-muted)',cursor:'pointer',fontSize:12}}>✎</button>
+            <button onClick={()=>setCf(true)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'rgba(248,113,113,.5)',cursor:'pointer',fontSize:12}}>✕</button>
+        </div>
+    </div>);
+}
+
+// ── Main App ──
+function App(){
+    const[authed,setAuthed]=useState(!!getToken());
+    const[view,setView]=useState('dashboard');
+    const[year,setYear]=useState(new Date().getFullYear());
+    const[data,setData]=useState(null);
+    const[loading,setLoading]=useState(true);
+    const[edit,setEdit]=useState(null);
+    const[fCat,setFCat]=useState('all');
+    const[fProp,setFProp]=useState('all');
+
+    const fetch_=useCallback(async()=>{setLoading(true);const r=await api(`entries?year=${year}`);if(r)setData(r);setLoading(false)},[year]);
+    useEffect(()=>{if(authed)fetch_()},[authed,fetch_]);
+
+    if(!authed)return<Login onLogin={()=>setAuthed(true)}/>;
+
+    const sm=data?.summary||{total_hours:0,total_entries:0,unique_days:0,total_mileage:0};
+    const th=parseFloat(sm.total_hours)||0;
+    const entries=data?.entries||[];
+    const monthly=data?.monthly||[];
+    const cats=data?.categories||[];
+    const props=data?.properties||[];
+    const filtered=entries.filter(e=>fCat==='all'||e.category===fCat).filter(e=>fProp==='all'||e.property===fProp);
+    const filtH=filtered.reduce((s,e)=>s+parseFloat(e.hours),0);
+
+    const save=async()=>{setEdit(null);setView('dashboard');await fetch_()};
+    const del=async id=>{await api(`entries?id=${id}`,{method:'DELETE'});await fetch_()};
+    const exp=()=>{const t=getToken();fetch(`${API}/export?year=${year}`,{headers:{Authorization:`Bearer ${t}`}}).then(r=>r.blob()).then(b=>{const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`REP_Hours_${year}.csv`;a.click();URL.revokeObjectURL(u)})};
+
+    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
+    const TL={fontSize:11,color:'var(--text-muted)',marginBottom:12,letterSpacing:1,textTransform:'uppercase'};
+    const nav=[{id:'dashboard',label:'Dashboard',icon:'📊'},{id:'add',label:'Log',icon:'➕'},{id:'history',label:'History',icon:'📜'},{id:'breakdown',label:'Stats',icon:'📈'}];
+
+    return(<div style={{height:'100vh',display:'flex',flexDirection:'column',maxWidth:540,margin:'0 auto',position:'relative'}}>
+        {/* Header */}
+        <div style={{padding:'16px 20px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <div><h1 style={{fontSize:19,fontWeight:700,letterSpacing:-.5,margin:0}}>REP Hours</h1>
+                <span style={{fontSize:10,color:'var(--text-faint)',letterSpacing:1.5,textTransform:'uppercase'}}>Michele's Activity Log</span></div>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                <button onClick={()=>{setYear(y=>y-1)}} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>‹</button>
+                <span style={{fontFamily:'var(--mono)',fontSize:14,fontWeight:700,minWidth:44,textAlign:'center'}}>{year}</span>
+                <button onClick={()=>{setYear(y=>y+1)}} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>›</button>
+                <button onClick={()=>{clearToken();setAuthed(false)}} className="tap" style={{marginLeft:8,background:'none',border:'none',color:'var(--text-faint)',cursor:'pointer',fontSize:13,fontFamily:'var(--font)'}}>Sign out</button>
+            </div>
+        </div>
+
+        {/* Content */}
+        <div style={{flex:1,overflowY:'auto',padding:'16px 16px 0',paddingBottom:80}}>
+            {loading&&!data?<div style={{textAlign:'center',padding:60,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading…</div>:<>
+
+            {view==='dashboard'&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
+                <div className="fu" style={CS}><Ring cur={th} goal={GOAL} year={year}/>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:18,textAlign:'center'}}>
+                        {[{v:sm.unique_days,l:'Days'},{v:sm.total_entries,l:'Entries'},{v:parseFloat(sm.total_mileage)>0?Number(sm.total_mileage).toLocaleString():'—',l:'Miles'}].map((s,i)=>
+                            <div key={i}><div style={{fontFamily:'var(--mono)',fontSize:20,fontWeight:700}}>{s.v}</div><div style={{fontSize:11,color:'var(--text-muted)'}}>{s.l}</div></div>)}
+                    </div>
+                </div>
+                <div className="fu fu1" style={CS}><div style={TL}>Monthly Distribution</div><MChart monthly={monthly}/></div>
+                {cats.length>0&&<div className="fu fu2" style={CS}><div style={TL}>Top Categories</div>
+                    {cats.slice(0,5).map(c=>{const ct=CATS.find(x=>x.id===c.category);return(
+                        <div key={c.category} style={{display:'flex',alignItems:'center',gap:10,marginBottom:11}}>
+                            <span style={{fontSize:16,flexShrink:0}}>{ct?.icon||'📝'}</span>
+                            <div style={{flex:1}}>
+                                <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}>
+                                    <span style={{color:'var(--text-dim)'}}>{ct?.label||c.category}</span>
+                                    <span style={{fontFamily:'var(--mono)',color:'var(--accent-soft)',fontWeight:600,fontSize:12}}>{fmtH(parseFloat(c.total))}</span>
+                                </div>
+                                <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,.04)'}}>
+                                    <div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',width:`${(parseFloat(c.total)/th)*100}%`,transition:'width .5s ease'}}/></div>
+                            </div></div>)})}</div>}
+                <button onClick={exp} className="tap fu fu3" style={{width:'100%',padding:13,borderRadius:12,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text-dim)',fontSize:14,cursor:'pointer',fontWeight:500,fontFamily:'var(--font)'}}>
+                    📥 Export {year} CSV for Tax Records</button>
+            </div>}
+
+            {view==='add'&&<EForm onSave={save} edit={edit} onCancel={()=>{setEdit(null);setView('dashboard')}}/>}
+
+            {view==='history'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
+                <div style={{display:'flex',gap:8}}>
+                    <select value={fCat} onChange={e=>setFCat(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>
+                        <option value="all">All Categories</option>{CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}</select>
+                    <select value={fProp} onChange={e=>setFProp(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>
+                        {PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select>
+                </div>
+                <div style={{fontSize:12,color:'var(--text-faint)',padding:'0 2px'}}>{filtered.length} entries · {fmtH(filtH)} total</div>
+                {filtered.length===0?<div className="fu" style={{textAlign:'center',padding:50,color:'var(--text-faint)'}}>No entries yet — start logging!</div>
+                :filtered.map(e=><ERow key={e.id} e={e} onEdit={en=>{setEdit(en);setView('add')}} onDel={del}/>)}
+            </div>}
+
+            {view==='breakdown'&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
+                {cats.length===0?<div className="fu" style={{textAlign:'center',padding:50,color:'var(--text-faint)'}}>No data yet</div>:<>
+                <div className="fu" style={CS}><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Category Breakdown — {year}</div>
+                    {cats.map(c=>{const ct=CATS.find(x=>x.id===c.category);return(
+                        <div key={c.category} style={{marginBottom:16}}>
+                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                                <span style={{fontSize:13,color:'var(--text-dim)'}}>{ct?.icon} {ct?.label||c.category}</span>
+                                <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:700,color:'var(--accent-soft)'}}>{fmtH(parseFloat(c.total))}</span>
+                            </div>
+                            <div style={{height:8,borderRadius:4,background:'rgba(255,255,255,.04)'}}>
+                                <div style={{height:'100%',borderRadius:4,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',width:`${(parseFloat(c.total)/parseFloat(cats[0].total))*100}%`}}/></div>
+                            <div style={{fontSize:11,color:'var(--text-faint)',marginTop:3}}>{((parseFloat(c.total)/th)*100).toFixed(1)}% · {c.entry_count} entries</div>
+                        </div>)})}</div>
+                <div className="fu fu1" style={CS}><div style={{fontSize:14,fontWeight:600,marginBottom:14}}>By Property</div>
+                    {props.map(p=>{const pr=PROPS.find(x=>x.id===p.property);return(
+                        <div key={p.property} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)'}}>
+                            <span style={{fontSize:13,color:'var(--text-dim)'}}>{pr?.label||p.property}</span>
+                            <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600,color:'var(--accent-soft)'}}>{fmtH(parseFloat(p.total))}</span>
+                        </div>)})}</div></>}
+            </div>}
+            </>}
+        </div>
+
+        {/* Nav */}
+        <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:540,display:'flex',
+            background:'rgba(12,12,20,.92)',backdropFilter:'blur(24px)',borderTop:'1px solid var(--border)',
+            padding:'8px 0 calc(8px + env(safe-area-inset-bottom,0px))',zIndex:100}}>
+            {nav.map(n=><button key={n.id} onClick={()=>{setView(n.id);if(n.id!=='add')setEdit(null);if(n.id==='dashboard'||n.id==='history')fetch_()}} className="tap"
+                style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'6px 4px',border:'none',background:'transparent',cursor:'pointer',
+                    color:view===n.id?'var(--accent-soft)':'var(--text-faint)',transition:'color .15s',fontFamily:'var(--font)'}}>
+                <span style={{fontSize:20}}>{n.icon}</span>
+                <span style={{fontSize:10,fontWeight:view===n.id?600:400}}>{n.label}</span>
+            </button>)}
+        </div>
+    </div>);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

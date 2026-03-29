@@ -1,0 +1,19 @@
+# render.yaml — Render Blueprint (Infrastructure as Code)
+# You can use this to auto-deploy, or just create the service manually.
+
+services:
+  - type: web
+    name: rep-hours-tracker
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: APP_PASSWORD
+        sync: false  # Render will prompt you to set this
+      - key: DB_PATH
+        value: /opt/render/project/data/rep_hours.db
+    disk:
+      name: rep-hours-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
