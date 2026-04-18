@@ -383,6 +383,111 @@ app.put('/api/photos/:id/caption', authenticate, (req, res) => {
 });
 
 // ══════════════════════════════════════════════════
+// EXPENSE TRACKER API (Phase 3)
+// ══════════════════════════════════════════════════
+
+// GET /api/expenses?year=2026
+app.get('/api/expenses', authenticate, (req, res) => {
+  const year = req.query.year || new Date().getFullYear().toString();
+  const expenses = db.prepare(
+    "SELECT * FROM expenses WHERE strftime('%Y', expense_date) = ? ORDER BY expense_date DESC, created_at DESC"
+  ).all(year);
+
+  let totalAmount = 0;
+  const catMap = {}, propMap = {}, monthlyMap = {};
+
+  for (const e of expenses) {
+    totalAmount += e.amount;
+    const month = parseInt(e.expense_date.split('-')[1], 10);
+    monthlyMap[month] = (monthlyMap[month] || 0) + e.amount;
+    if (!catMap[e.category]) catMap[e.category] = { total: 0, count: 0 };
+    catMap[e.category].total += e.amount;
+    catMap[e.category].count++;
+    if (!propMap[e.property]) propMap[e.property] = { total: 0, count: 0 };
+    propMap[e.property].total += e.amount;
+    propMap[e.property].count++;
+  }
+
+  res.json({
+    expenses,
+    summary: { total_amount: totalAmount, total_count: expenses.length },
+    monthly: Object.entries(monthlyMap).map(([m, t]) => ({ month: parseInt(m), total: t })),
+    categories: Object.entries(catMap).map(([c, d]) => ({ category: c, ...d })).sort((a, b) => b.total - a.total),
+    properties: Object.entries(propMap).map(([p, d]) => ({ property: p, ...d })).sort((a, b) => b.total - a.total),
+  });
+});
+
+// POST /api/expenses
+app.post('/api/expenses', authenticate, (req, res) => {
+  const { expense_date, amount, category, property, vendor, description, receipt_filename } = req.body;
+  if (!expense_date || !amount || !category) return res.status(400).json({ error: 'Missing required fields' });
+  const result = db.prepare(
+    'INSERT INTO expenses (expense_date, amount, category, property, vendor, description, receipt_filename) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(expense_date, parseFloat(amount), category, property || 'all', vendor || '', description || '', receipt_filename || null);
+  const entry = db.prepare('SELECT * FROM expenses WHERE id = ?').get(result.lastInsertRowid);
+  res.status(201).json({ success: true, expense: entry });
+});
+
+// PUT /api/expenses
+app.put('/api/expenses', authenticate, (req, res) => {
+  const { id, expense_date, amount, category, property, vendor, description } = req.body;
+  if (!id) return res.status(400).json({ error: 'Missing expense ID' });
+  db.prepare(
+    "UPDATE expenses SET expense_date=?, amount=?, category=?, property=?, vendor=?, description=?, updated_at=datetime('now','localtime') WHERE id=?"
+  ).run(expense_date, parseFloat(amount), category, property || 'all', vendor || '', description || '', parseInt(id));
+  const entry = db.prepare('SELECT * FROM expenses WHERE id = ?').get(parseInt(id));
+  res.json({ success: true, expense: entry });
+});
+
+// DELETE /api/expenses/:id
+app.delete('/api/expenses/:id', authenticate, (req, res) => {
+  const expense = db.prepare('SELECT * FROM expenses WHERE id = ?').get(parseInt(req.params.id));
+  if (expense && expense.receipt_filename) {
+    const filepath = path.join(UPLOAD_DIR, expense.receipt_filename);
+    if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+  }
+  db.prepare('DELETE FROM expenses WHERE id = ?').run(parseInt(req.params.id));
+  res.json({ success: true });
+});
+
+// POST /api/expenses/upload-receipt — Upload receipt image and store it
+app.post('/api/expenses/upload-receipt', authenticate, (req, res, next) => {
+  upload.single('receipt')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: 'Upload failed: ' + err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    res.json({
+      success: true,
+      filename: req.file.filename,
+      url: `/uploads/${req.file.filename}`,
+    });
+  });
+});
+
+// GET /api/expenses/export?year=2026
+app.get('/api/expenses/export', authenticate, (req, res) => {
+  const year = req.query.year || new Date().getFullYear().toString();
+  const expenses = db.prepare(
+    "SELECT * FROM expenses WHERE strftime('%Y', expense_date) = ? ORDER BY expense_date ASC"
+  ).all(year);
+
+  const rows = ['Date,Amount,Category,Property,Vendor,Description,Receipt'];
+  let total = 0;
+  for (const e of expenses) {
+    total += e.amount;
+    const desc = (e.description || '').replace(/"/g, '""');
+    const vendor = (e.vendor || '').replace(/"/g, '""');
+    rows.push([e.expense_date, e.amount.toFixed(2), e.category, e.property,
+      `"${vendor}"`, `"${desc}"`, e.receipt_filename || ''].join(','));
+  }
+  rows.push('', 'SUMMARY', `Total Expenses,$${total.toFixed(2)}`,
+    `Total Entries,${expenses.length}`, `Year,${year}`);
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename=Expenses_${year}.csv`);
+  res.send(rows.join('\n'));
+});
+
+// ══════════════════════════════════════════════════
 // SPA FALLBACK
 // ══════════════════════════════════════════════════
 app.get('*', (req, res) => {
