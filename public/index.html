@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,18 +144,45 @@ function HeroBanner(){
 function PropertyCard({prop,index}){
     const hasPhotos = prop.photos && prop.photos.length > 0;
     const placeholderColors = ['#2d5f8a','#6ba5a5','#c4704b'];
+    const[photoIdx,setPhotoIdx]=useState(0);
+    const numPhotos=hasPhotos?prop.photos.length:0;
+    const nextPhoto=()=>setPhotoIdx(i=>(i+1)%numPhotos);
+    const prevPhoto=()=>setPhotoIdx(i=>(i-1+numPhotos)%numPhotos);
 
     return(<div className={`fu fu${index+1}`} style={{background:'#fff',borderRadius:16,overflow:'hidden',
         boxShadow:'0 4px 24px rgba(0,0,0,.06)',transition:'transform .3s,box-shadow .3s',cursor:'default',
         marginBottom:0}} onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 12px 40px rgba(0,0,0,.1)'}}
         onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 24px rgba(0,0,0,.06)'}}>
-        {/* Image area */}
+        {/* Image area with slideshow */}
         <div style={{height:280,position:'relative',overflow:'hidden',
-            background:hasPhotos?`url(${prop.photos[0].url}) center/cover`:`linear-gradient(135deg, ${placeholderColors[index]}, ${placeholderColors[(index+1)%3]})`}}>
+            background:hasPhotos?`url(${prop.photos[photoIdx].url}) center/cover`:`linear-gradient(135deg, ${placeholderColors[index]}, ${placeholderColors[(index+1)%3]})`}}>
             {!hasPhotos&&<div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'rgba(255,255,255,.7)'}}>
                 <span style={{fontSize:48,marginBottom:8}}>{['🏖️','🌊','🏡'][index]}</span>
                 <span style={{fontSize:13,letterSpacing:2,textTransform:'uppercase'}}>Photos Coming Soon</span>
             </div>}
+            {/* Nav arrows */}
+            {numPhotos>1&&<>
+                <button onClick={e=>{e.stopPropagation();prevPhoto()}} style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',
+                    width:36,height:36,borderRadius:'50%',border:'none',background:'rgba(0,0,0,.4)',backdropFilter:'blur(4px)',
+                    color:'#fff',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+                    zIndex:2,transition:'background .2s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,.6)'}
+                    onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,.4)'}>‹</button>
+                <button onClick={e=>{e.stopPropagation();nextPhoto()}} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',
+                    width:36,height:36,borderRadius:'50%',border:'none',background:'rgba(0,0,0,.4)',backdropFilter:'blur(4px)',
+                    color:'#fff',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+                    zIndex:2,transition:'background .2s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,.6)'}
+                    onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,.4)'}>›</button>
+                {/* Dots */}
+                <div style={{position:'absolute',bottom:48,left:'50%',transform:'translateX(-50%)',display:'flex',gap:5,zIndex:2}}>
+                    {prop.photos.map((_,i)=><button key={i} onClick={e=>{e.stopPropagation();setPhotoIdx(i)}}
+                        style={{width:i===photoIdx?16:7,height:7,borderRadius:4,border:'none',
+                            background:i===photoIdx?'#fff':'rgba(255,255,255,.5)',cursor:'pointer',transition:'all .2s',padding:0}}/>)}
+                </div>
+            </>}
+            {/* Caption overlay */}
+            {hasPhotos&&prop.photos[photoIdx].caption&&<div style={{position:'absolute',top:10,right:10,
+                padding:'4px 10px',borderRadius:6,background:'rgba(0,0,0,.5)',backdropFilter:'blur(4px)',
+                fontSize:11,color:'rgba(255,255,255,.85)',maxWidth:'60%',zIndex:2}}>{prop.photos[photoIdx].caption}</div>}
             <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'40px 24px 16px',
                 background:'linear-gradient(transparent,rgba(0,0,0,.6))'}}>
                 <div style={{display:'flex',gap:8}}>
@@ -162,6 +190,8 @@ function PropertyCard({prop,index}){
                         fontSize:11,color:'#fff',fontWeight:600,letterSpacing:.5}}>{prop.position}</span>
                     {prop.petFriendly&&<span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.2)',
                         backdropFilter:'blur(4px)',fontSize:11,color:'#fff',fontWeight:600}}>🐕 Pet-Friendly</span>}
+                    {numPhotos>1&&<span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.15)',
+                        fontSize:11,color:'rgba(255,255,255,.8)'}}>{photoIdx+1}/{numPhotos}</span>}
                 </div>
             </div>
         </div>
@@ -394,6 +424,205 @@ function ERow({e,onEdit,onDel}){const[cf,setCf]=useState(false);const ct=CATS.fi
 }
 
 // ── Admin Panel (restructured with section tabs) ──
+// ── Photo Manager (Phase 2) ──
+const PROP_LIST=[{key:'salt_house',name:'Laughing Dolphin',code:'E248'},{key:'kdh',name:'C Dolphin',code:'KD1003'},{key:'lighthouse',name:'Where the Light Began',code:'J10925'}];
+
+function PhotoManager(){
+    const[activeProp,setActiveProp]=useState('salt_house');
+    const[photos,setPhotos]=useState([]);
+    const[loading,setLoading]=useState(true);
+    const[uploading,setUploading]=useState(false);
+    const[dragIdx,setDragIdx]=useState(null);
+    const[dragOverIdx,setDragOverIdx]=useState(null);
+    const[editCaption,setEditCaption]=useState(null); // {id, caption}
+    const[confirmDel,setConfirmDel]=useState(null);
+    const fileRef=useRef(null);
+
+    const fetchPhotos=useCallback(async()=>{
+        setLoading(true);
+        try{
+            const t=getToken();
+            const r=await fetch(`${API}/photos/${activeProp}`,{headers:{Authorization:`Bearer ${t}`}});
+            if(r.ok){const d=await r.json();setPhotos(d)}
+        }catch(e){console.error(e)}
+        setLoading(false);
+    },[activeProp]);
+
+    useEffect(()=>{fetchPhotos()},[fetchPhotos]);
+
+    const handleUpload=async(e)=>{
+        const files=Array.from(e.target.files||[]);
+        if(!files.length)return;
+        setUploading(true);
+        const t=getToken();
+        for(const file of files){
+            const fd=new FormData();
+            fd.append('photo',file);
+            fd.append('property_key',activeProp);
+            fd.append('caption','');
+            try{
+                await fetch(`${API}/photos`,{method:'POST',headers:{Authorization:`Bearer ${t}`},body:fd});
+            }catch(err){console.error('Upload failed:',err)}
+        }
+        if(fileRef.current)fileRef.current.value='';
+        setUploading(false);
+        fetchPhotos();
+    };
+
+    const handleDelete=async(id)=>{
+        const t=getToken();
+        await fetch(`${API}/photos/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${t}`}});
+        setConfirmDel(null);
+        fetchPhotos();
+    };
+
+    const handleCaptionSave=async()=>{
+        if(!editCaption)return;
+        const t=getToken();
+        await fetch(`${API}/photos/${editCaption.id}/caption`,{
+            method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},
+            body:JSON.stringify({caption:editCaption.caption})});
+        setEditCaption(null);
+        fetchPhotos();
+    };
+
+    const handleDragStart=(idx)=>{setDragIdx(idx)};
+    const handleDragOver=(e,idx)=>{e.preventDefault();setDragOverIdx(idx)};
+    const handleDrop=async(idx)=>{
+        if(dragIdx===null||dragIdx===idx)return;
+        const newPhotos=[...photos];
+        const[moved]=newPhotos.splice(dragIdx,1);
+        newPhotos.splice(idx,0,moved);
+        setPhotos(newPhotos);
+        setDragIdx(null);setDragOverIdx(null);
+        // Save new order
+        const t=getToken();
+        const orders=newPhotos.map((p,i)=>({id:p.id,sort_order:i+1}));
+        await fetch(`${API}/photos/reorder`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},
+            body:JSON.stringify({orders})});
+    };
+    const handleDragEnd=()=>{setDragIdx(null);setDragOverIdx(null)};
+
+    // Touch drag support
+    const touchRef=useRef({startIdx:null,el:null});
+    const handleTouchStart=(idx,e)=>{touchRef.current.startIdx=idx};
+    const handleTouchMove=(e)=>{/* handled via dragOverIdx visual only */};
+    const handleTouchEnd=(idx)=>{
+        if(touchRef.current.startIdx!==null&&touchRef.current.startIdx!==idx){
+            handleDrop(idx);
+        }
+        touchRef.current.startIdx=null;
+    };
+
+    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
+    const activePropInfo=PROP_LIST.find(p=>p.key===activeProp);
+
+    return(<div style={{display:'flex',flexDirection:'column',gap:14}}>
+        {/* Property selector tabs */}
+        <div style={{display:'flex',gap:6}}>
+            {PROP_LIST.map(p=><button key={p.key} onClick={()=>setActiveProp(p.key)} className="tap"
+                style={{flex:1,padding:'10px 8px',borderRadius:10,
+                    border:`1px solid ${activeProp===p.key?'var(--accent)':'var(--border)'}`,
+                    background:activeProp===p.key?'rgba(99,102,241,.1)':'var(--bg-card)',
+                    color:activeProp===p.key?'var(--accent-soft)':'var(--text-dim)',
+                    fontSize:12,fontWeight:activeProp===p.key?600:400,cursor:'pointer',fontFamily:'var(--font)',
+                    display:'flex',flexDirection:'column',alignItems:'center',gap:2,transition:'all .2s'}}>
+                <span style={{fontSize:14,fontWeight:600}}>{p.code}</span>
+                <span style={{fontSize:10,opacity:.7}}>{p.name}</span>
+            </button>)}
+        </div>
+
+        {/* Upload area */}
+        <div className="fu" style={CS}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                <div>
+                    <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>{activePropInfo?.name}</div>
+                    <div style={{fontSize:12,color:'var(--text-muted)'}}>{photos.length} photo{photos.length!==1?'s':''} · Drag to reorder</div>
+                </div>
+                <label className="tap" style={{padding:'8px 16px',borderRadius:8,background:'linear-gradient(135deg,var(--accent),#4f46e5)',
+                    color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px var(--accent-glow)',
+                    opacity:uploading?.5:1,pointerEvents:uploading?'none':'auto'}}>
+                    {uploading?'Uploading…':'+ Upload Photos'}
+                    <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleUpload}
+                        style={{display:'none'}}/>
+                </label>
+            </div>
+
+            {loading?<div style={{textAlign:'center',padding:40,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading photos…</div>
+            :photos.length===0?<div style={{textAlign:'center',padding:40,border:'2px dashed var(--border-light)',borderRadius:12}}>
+                <div style={{fontSize:36,marginBottom:8}}>📷</div>
+                <div style={{fontSize:14,color:'var(--text-muted)'}}>No photos yet — upload some to get started</div>
+                <div style={{fontSize:12,color:'var(--text-faint)',marginTop:4}}>Photos appear on the public property page</div>
+            </div>
+            :<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:10}}>
+                {photos.map((photo,idx)=>(
+                    <div key={photo.id}
+                        draggable onDragStart={()=>handleDragStart(idx)} onDragOver={e=>handleDragOver(e,idx)}
+                        onDrop={()=>handleDrop(idx)} onDragEnd={handleDragEnd}
+                        style={{position:'relative',borderRadius:10,overflow:'hidden',
+                            border:dragOverIdx===idx?'2px solid var(--accent)':'2px solid transparent',
+                            opacity:dragIdx===idx?.4:1,transition:'opacity .2s, border .2s',
+                            cursor:'grab',background:'var(--bg)'}}>
+                        {/* Thumbnail */}
+                        <div style={{paddingTop:'75%',position:'relative',overflow:'hidden'}}>
+                            <img src={photo.url} alt={photo.caption||'Property photo'}
+                                style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
+                                loading="lazy"/>
+                            {/* Order badge */}
+                            <div style={{position:'absolute',top:6,left:6,width:22,height:22,borderRadius:'50%',
+                                background:'rgba(0,0,0,.6)',display:'flex',alignItems:'center',justifyContent:'center',
+                                fontSize:10,fontWeight:700,color:'#fff'}}>{idx+1}</div>
+                        </div>
+                        {/* Actions */}
+                        <div style={{padding:'6px 8px',display:'flex',gap:4}}>
+                            {editCaption?.id===photo.id?
+                                <div style={{display:'flex',gap:4,width:'100%'}}>
+                                    <input type="text" value={editCaption.caption} onChange={e=>setEditCaption({...editCaption,caption:e.target.value})}
+                                        onKeyDown={e=>e.key==='Enter'&&handleCaptionSave()}
+                                        placeholder="Caption…" autoFocus
+                                        style={{flex:1,padding:'4px 6px',borderRadius:4,border:'1px solid var(--border-light)',
+                                            background:'var(--bg-card)',color:'var(--text)',fontSize:10,outline:'none',minWidth:0}}/>
+                                    <button onClick={handleCaptionSave} style={{padding:'4px 6px',borderRadius:4,border:'none',
+                                        background:'var(--accent)',color:'#fff',fontSize:9,cursor:'pointer',flexShrink:0}}>✓</button>
+                                    <button onClick={()=>setEditCaption(null)} style={{padding:'4px 6px',borderRadius:4,border:'none',
+                                        background:'rgba(255,255,255,.06)',color:'var(--text-muted)',fontSize:9,cursor:'pointer',flexShrink:0}}>✕</button>
+                                </div>
+                            :<>
+                                <button onClick={()=>setEditCaption({id:photo.id,caption:photo.caption||''})}
+                                    title="Edit caption"
+                                    style={{flex:1,padding:'4px',borderRadius:4,border:'none',background:'rgba(255,255,255,.06)',
+                                        color:'var(--text-muted)',fontSize:10,cursor:'pointer',textAlign:'left',overflow:'hidden',
+                                        textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                                    {photo.caption||'Add caption…'}
+                                </button>
+                                {confirmDel===photo.id?
+                                    <div style={{display:'flex',gap:2}}>
+                                        <button onClick={()=>handleDelete(photo.id)} style={{padding:'4px 6px',borderRadius:4,border:'none',
+                                            background:'var(--red)',color:'#fff',fontSize:9,cursor:'pointer'}}>Yes</button>
+                                        <button onClick={()=>setConfirmDel(null)} style={{padding:'4px 6px',borderRadius:4,border:'none',
+                                            background:'rgba(255,255,255,.06)',color:'var(--text-muted)',fontSize:9,cursor:'pointer'}}>No</button>
+                                    </div>
+                                :<button onClick={()=>setConfirmDel(photo.id)} title="Delete"
+                                    style={{padding:'4px 6px',borderRadius:4,border:'none',background:'rgba(255,255,255,.06)',
+                                        color:'rgba(248,113,113,.5)',fontSize:10,cursor:'pointer',flexShrink:0}}>✕</button>
+                                }
+                            </>}
+                        </div>
+                    </div>
+                ))}
+            </div>}
+        </div>
+
+        {/* Tips */}
+        <div style={{...CS,padding:16}}>
+            <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>
+                <strong style={{color:'var(--text-dim)'}}>Tips:</strong> The first photo becomes the main image on the public site.
+                Drag photos to reorder. Click a caption to edit it. Supported formats: JPG, PNG, WebP. Max 10MB per photo.
+            </div>
+        </div>
+    </div>);
+}
+
 function AdminPanel({onLogout,onBack}){
     const[section,setSection]=useState('hours');
     const[view,setView]=useState('dashboard');const[year,setYear]=useState(new Date().getFullYear());
@@ -491,12 +720,7 @@ function AdminPanel({onLogout,onBack}){
                             <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600,color:'var(--accent-soft)'}}>{fmtH(parseFloat(p.total))}</span></div>)})}</div></>}</div>}
                 </>}
             </>}
-            {section==='photos'&&<div className="fu" style={{...CS,textAlign:'center'}}>
-                <div style={{fontSize:48,marginBottom:12}}>📸</div>
-                <div style={{fontSize:16,fontWeight:600,color:'var(--text)',marginBottom:8}}>Photo Manager</div>
-                <p style={{fontSize:14,color:'var(--text-muted)',lineHeight:1.6}}>
-                    Upload and arrange photos for your property listings.<br/>Coming in Phase 2.
-                </p></div>}
+            {section==='photos'&&<PhotoManager/>}
             {section==='expenses'&&<div className="fu" style={{...CS,textAlign:'center'}}>
                 <div style={{fontSize:48,marginBottom:12}}>💰</div>
                 <div style={{fontSize:16,fontWeight:600,color:'var(--text)',marginBottom:8}}>Expense Tracker</div>
