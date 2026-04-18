@@ -80,10 +80,16 @@ db.exec(`
 `);
 
 console.log(`Database initialized at ${DB_PATH}`);
+console.log(`Upload directory: ${UPLOAD_DIR}`);
 
 // ── Middleware ────────────────────────────────────
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+// Skip JSON parsing for multipart uploads (multer handles those)
+app.use((req, res, next) => {
+  const ct = req.headers['content-type'] || '';
+  if (ct.includes('multipart/form-data')) return next();
+  express.json({ limit: '10mb' })(req, res, next);
+});
 app.use('/uploads', express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -306,21 +312,29 @@ app.get('/api/export', authenticate, (req, res) => {
 // PHOTO MANAGEMENT API (Phase 2 — routes ready)
 // ══════════════════════════════════════════════════
 
-app.post('/api/photos', authenticate, upload.single('photo'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const { property_key, caption } = req.body;
-  if (!property_key) return res.status(400).json({ error: 'Missing property_key' });
+app.post('/api/photos', authenticate, (req, res, next) => {
+  upload.single('photo')(req, res, (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ error: 'Upload failed: ' + err.message });
+    }
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const { property_key, caption } = req.body;
+    if (!property_key) return res.status(400).json({ error: 'Missing property_key' });
 
-  const maxOrder = db.prepare('SELECT MAX(sort_order) as mx FROM property_photos WHERE property_key = ?').get(property_key);
-  const sortOrder = (maxOrder?.mx || 0) + 1;
+    console.log(`Photo uploaded: ${req.file.filename} for ${property_key}`);
 
-  const result = db.prepare(
-    'INSERT INTO property_photos (property_key, filename, caption, sort_order) VALUES (?, ?, ?, ?)'
-  ).run(property_key, req.file.filename, caption || '', sortOrder);
+    const maxOrder = db.prepare('SELECT MAX(sort_order) as mx FROM property_photos WHERE property_key = ?').get(property_key);
+    const sortOrder = (maxOrder?.mx || 0) + 1;
 
-  res.status(201).json({
-    success: true,
-    photo: { id: result.lastInsertRowid, url: `/uploads/${req.file.filename}`, caption: caption || '', sort_order: sortOrder },
+    const result = db.prepare(
+      'INSERT INTO property_photos (property_key, filename, caption, sort_order) VALUES (?, ?, ?, ?)'
+    ).run(property_key, req.file.filename, caption || '', sortOrder);
+
+    res.status(201).json({
+      success: true,
+      photo: { id: result.lastInsertRowid, url: `/uploads/${req.file.filename}`, caption: caption || '', sort_order: sortOrder },
+    });
   });
 });
 
@@ -342,6 +356,28 @@ app.delete('/api/photos/:id', authenticate, (req, res) => {
     if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
     db.prepare('DELETE FROM property_photos WHERE id = ?').run(parseInt(req.params.id));
   }
+  res.json({ success: true });
+});
+
+// GET photos for a specific property (admin use)
+app.get('/api/photos/:property_key', authenticate, (req, res) => {
+  const photos = db.prepare(
+    'SELECT * FROM property_photos WHERE property_key = ? ORDER BY sort_order ASC'
+  ).all(req.params.property_key);
+  res.json(photos.map(p => ({
+    id: p.id,
+    property_key: p.property_key,
+    url: `/uploads/${p.filename}`,
+    filename: p.filename,
+    caption: p.caption,
+    sort_order: p.sort_order,
+  })));
+});
+
+// Update caption for a photo
+app.put('/api/photos/:id/caption', authenticate, (req, res) => {
+  const { caption } = req.body;
+  db.prepare('UPDATE property_photos SET caption = ? WHERE id = ?').run(caption || '', parseInt(req.params.id));
   res.json({ success: true });
 });
 
