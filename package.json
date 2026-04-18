@@ -1,7 +1,7 @@
 {
-  "name": "rep-hours-tracker",
-  "version": "1.0.0",
-  "description": "REP Hours Tracker - Michele's IRS compliance log",
+  "name": "colletti-coastal-properties",
+  "version": "2.0.0",
+  "description": "Colletti Coastal Properties - OBX Vacation Rentals & Property Management",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,8 @@
   "dependencies": {
     "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1"
   },
   "engines": {
     "node": ">=18.0.0"

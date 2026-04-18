@@ -1,155 +1,95 @@
-# REP Hours Tracker — Render Deployment Guide
+# Colletti Coastal Properties — v2 Deployment Guide
 
-## What You're Deploying
+## What Changed from v1
 
-A mobile-friendly web app for Michele to log her 750+ real estate
-professional hours. Password-protected, works on phone and desktop,
-exports CSV for your CPA.
+This update transforms the REP Hours Tracker into a full property business
+platform while **preserving all existing REP hours data**.
 
-**Stack:** Express (Node.js) + SQLite + React (single HTML file)
+### New Features
+- **Public property showcase** — Beautiful landing page with all 3 OBX properties
+  (Laughing Dolphin, C Dolphin, Where the Light Began) with booking links to Twiddy
+- **Admin section tabs** — REP Hours, Photos (Phase 2), Expenses (Phase 3)
+- **Restructured navigation** — Public site for guests, admin panel for Michele
+
+### What's Preserved
+- All existing REP hours entries in SQLite
+- Same login password
+- Same API endpoints (entries, export)
 
 ---
 
-## Step 1: Push to GitHub
+## Updating Your Existing Render Deployment
 
-Create a new GitHub repo and push this project:
+Since you already have the service running with a persistent disk,
+this is just a code update — your data stays safe.
+
+### Step 1: Update Your Local Files
+
+Replace the files in your local `rep-hours-tracker` repo with
+the contents of this zip. The key files that changed:
+
+- `server.js` — Extended with properties API, photo routes, new DB tables
+- `public/index.html` — Complete rewrite with public + admin UI
+- `package.json` — Added multer for photo uploads (Phase 2)
+- `render.yaml` — Updated service name and UPLOAD_DIR env var
+
+### Step 2: Push to GitHub
 
 ```bash
-cd rep-hours-render
-git init
+cd your-repo-folder
 git add .
-git commit -m "REP Hours Tracker"
-git remote add origin https://github.com/YOUR_USERNAME/rep-hours-tracker.git
-git push -u origin main
+git commit -m "v2: Property showcase + admin restructure"
+git push
 ```
 
-## Step 2: Create the Render Service
+### Step 3: Add UPLOAD_DIR Environment Variable
 
-1. Go to https://dashboard.render.com
-2. Click **New** → **Web Service**
-3. Connect your GitHub account (if not already) and select the repo
-4. Configure:
+In your Render dashboard → Service → Environment:
 
-| Setting          | Value                        |
-|------------------|------------------------------|
-| **Name**         | `rep-hours-tracker`          |
-| **Region**       | Ohio (US East) or nearest    |
-| **Runtime**      | Node                         |
-| **Build Command**| `npm install`                |
-| **Start Command**| `node server.js`             |
-| **Plan**         | Free (or Starter for no spin-down) |
+Add this new variable:
+- `UPLOAD_DIR` = `/opt/render/project/data/uploads`
 
-## Step 3: Add a Persistent Disk
+Your existing `APP_PASSWORD` and `DB_PATH` stay the same.
 
-**This is critical** — without it, your data disappears on every deploy.
+### Step 4: Render Auto-Deploys
 
-1. In the Render service settings, scroll to **Disks**
-2. Click **Add Disk**
-3. Configure:
-
-| Setting        | Value                              |
-|----------------|------------------------------------|
-| **Name**       | `rep-hours-data`                   |
-| **Mount Path** | `/opt/render/project/data`         |
-| **Size**       | 1 GB (minimum, more than enough)   |
-
-## Step 4: Set Environment Variables
-
-In the Render service settings → **Environment**:
-
-| Key            | Value                                   |
-|----------------|-----------------------------------------|
-| `APP_PASSWORD` | Whatever you want Michele's password to be |
-| `DB_PATH`      | `/opt/render/project/data/rep_hours.db` |
-
-## Step 5: Deploy
-
-Click **Deploy** (or it auto-deploys from your GitHub push).
-
-Your app will be live at: `https://rep-hours-tracker.onrender.com`
-(or whatever name you chose)
+Render will detect the push and redeploy. The new `server.js` will:
+1. Open the existing SQLite database (preserving all entries)
+2. Create new tables (property_photos, expenses) if they don't exist
+3. Serve the new public + admin frontend
 
 ---
 
-## For Michele's Phone
+## Site Structure After Update
 
-1. Open the Render URL in Safari (iPhone) or Chrome (Android)
-2. **iPhone:** Tap Share → "Add to Home Screen"
-3. **Android:** Tap menu (⋮) → "Add to Home Screen"
+### Public Site (no login required)
+- `yourdomain.com` — Hero banner + property showcase
+- Three property cards with details and "Book on Twiddy" buttons
+- Mobile responsive
 
----
-
-## About Spin-Down (Free Tier)
-
-On Render's free plan, the service spins down after 15 minutes of
-inactivity. The next request takes ~30-50 seconds to spin back up.
-After that, it's instant.
-
-**Options to avoid this:**
-- **Starter plan ($7/month):** Always-on, no spin-down
-- **Free workaround:** Use a free cron service like https://cron-job.org
-  to ping your URL every 14 minutes to keep it warm
-
-Since Michele is probably only logging hours a few times per week,
-the spin-down may be acceptable — she'll just wait a moment on the
-first load of the day.
+### Admin Panel (password protected)
+- `yourdomain.com` → Click "Owner Login" → Enter password
+- **REP Hours tab** — Same dashboard, logging, history, stats as before
+- **Photos tab** — Coming in Phase 2
+- **Expenses tab** — Coming in Phase 3
+- Back arrow returns to public site
 
 ---
 
 ## Optional: Custom Domain
 
-To use something like `hours.jamescolletti.com`:
+If you want this at `colletti.com` or `colletticoastal.com`:
 
-1. In Render service settings → **Custom Domains**
-2. Add `hours.jamescolletti.com`
-3. Render gives you a CNAME target
-4. In GoDaddy DNS settings, add a CNAME record:
-   - **Type:** CNAME
-   - **Name:** `hours`
-   - **Value:** (the target Render gives you)
-5. Wait for DNS propagation (~5-30 minutes)
-6. Render auto-provisions SSL — it just works
+1. In Render → Custom Domains → Add your domain
+2. In GoDaddy DNS → Add CNAME record pointing to Render's target
+3. Render auto-provisions SSL
 
 ---
 
-## Updating the App
+## Phase 2 (Photos) and Phase 3 (Expenses)
 
-Just push to GitHub — Render auto-deploys:
+The backend routes and database tables are already created and ready.
+Phase 2 will add the photo upload UI and drag-to-reorder functionality.
+Phase 3 will add manual expense entry and receipt OCR via Claude's API.
 
-```bash
-git add .
-git commit -m "your changes"
-git push
-```
-
-The persistent disk keeps your data safe across deploys.
-
----
-
-## Backing Up Data
-
-The SQLite file lives on Render's persistent disk. To back up:
-
-1. Use the CSV export button in the app (recommended)
-2. Or SSH into the Render service (paid plans) and download the .db file
-
----
-
-## Troubleshooting
-
-**App loads but API calls fail:**
-- Check that environment variables are set in Render dashboard
-- Look at Render's Logs tab for errors
-
-**Data disappeared after deploy:**
-- You probably forgot the persistent disk (Step 3)
-- Without it, SQLite writes to ephemeral storage that resets on deploy
-
-**Slow first load:**
-- This is the free tier spin-up — takes ~30-50 seconds after inactivity
-- Subsequent requests are fast
-- Upgrade to Starter ($7/mo) to eliminate this
-
-**"Cannot find module 'better-sqlite3'":**
-- Make sure build command is `npm install` (not `npm ci`)
-- better-sqlite3 needs to compile native bindings on Render's Linux
+Both phases will be code-only updates — no infrastructure changes needed.

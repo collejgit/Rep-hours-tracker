@@ -1,19 +1,18 @@
-# render.yaml — Render Blueprint (Infrastructure as Code)
-# You can use this to auto-deploy, or just create the service manually.
-
 services:
   - type: web
-    name: rep-hours-tracker
+    name: colletti-coastal
     runtime: node
     plan: free
     buildCommand: npm install
     startCommand: node server.js
     envVars:
       - key: APP_PASSWORD
-        sync: false  # Render will prompt you to set this
+        sync: false
       - key: DB_PATH
         value: /opt/render/project/data/rep_hours.db
+      - key: UPLOAD_DIR
+        value: /opt/render/project/data/uploads
     disk:
-      name: rep-hours-data
+      name: colletti-data
       mountPath: /opt/render/project/data
       sizeGB: 1
