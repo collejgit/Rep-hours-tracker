@@ -785,35 +785,26 @@ function ExpenseForm({onSave,edit,onCancel}){
             if(r.ok){
                 const d=await r.json();
                 setReceiptFile(d.filename);
-                // Now OCR the receipt using Claude API
+                // OCR via server-side proxy
                 setParsing(true);
                 try{
-                    const reader=new FileReader();
-                    const base64=await new Promise((res,rej)=>{reader.onload=()=>res(reader.result.split(',')[1]);reader.onerror=rej;reader.readAsDataURL(file)});
-                    const mediaType=file.type||'image/jpeg';
-                    const ocrRes=await fetch('https://api.anthropic.com/v1/messages',{
-                        method:'POST',headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({
-                            model:'claude-sonnet-4-20250514',max_tokens:1000,
-                            messages:[{role:'user',content:[
-                                {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
-                                {type:'text',text:'Extract the following from this receipt and respond ONLY with a JSON object (no markdown, no backticks): {"date":"YYYY-MM-DD","amount":number,"vendor":"store/company name","description":"brief description of items/services","category":"one of: repairs, capital, supplies, utilities, insurance, taxes, management, cleaning, travel, furnishing, landscaping, legal, marketing, mortgage, other"}. If you cannot determine a field, use null.'}
-                            ]}]
-                        })
+                    const t2=getToken();
+                    const ocrRes=await fetch(`${API}/expenses/ocr`,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json',Authorization:`Bearer ${t2}`},
+                        body:JSON.stringify({filename:d.filename})
                     });
                     if(ocrRes.ok){
                         const ocrData=await ocrRes.json();
-                        const txt=ocrData.content?.find(c=>c.type==='text')?.text||'';
-                        const clean=txt.replace(/```json|```/g,'').trim();
-                        try{
-                            const parsed=JSON.parse(clean);
-                            if(parsed.date)setDt(parsed.date);
-                            if(parsed.amount)setAmt(String(parsed.amount));
-                            if(parsed.vendor)setVendor(parsed.vendor);
-                            if(parsed.description)setDesc(parsed.description);
-                            if(parsed.category&&EXP_CATS.find(c=>c.id===parsed.category))setCat(parsed.category);
-                        }catch(pe){console.error('OCR parse error:',pe,clean)}
-                    }
+                        if(ocrData.parsed){
+                            const p=ocrData.parsed;
+                            if(p.date)setDt(p.date);
+                            if(p.amount)setAmt(String(p.amount));
+                            if(p.vendor)setVendor(p.vendor);
+                            if(p.description)setDesc(p.description);
+                            if(p.category&&EXP_CATS.find(c=>c.id===p.category))setCat(p.category);
+                        }
+                    }else{const err=await ocrRes.text();console.error('OCR error:',err)}
                 }catch(ocrErr){console.error('OCR error:',ocrErr)}
                 setParsing(false);
             }else{const err=await r.text();console.error('Receipt upload error:',err)}

@@ -463,6 +463,64 @@ app.post('/api/expenses/upload-receipt', authenticate, (req, res, next) => {
   });
 });
 
+// POST /api/expenses/ocr — Server-side OCR via Claude API
+app.post('/api/expenses/ocr', authenticate, async (req, res) => {
+  const { filename } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Missing filename' });
+
+  const filepath = path.join(UPLOAD_DIR, filename);
+  if (!fs.existsSync(filepath)) return res.status(404).json({ error: 'File not found' });
+
+  try {
+    const fileBuffer = fs.readFileSync(filepath);
+    const base64 = fileBuffer.toString('base64');
+    const ext = path.extname(filename).toLowerCase();
+    const mediaTypes = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+    const mediaType = mediaTypes[ext] || 'image/jpeg';
+
+    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'Extract the following from this receipt and respond ONLY with a JSON object (no markdown, no backticks): {"date":"YYYY-MM-DD","amount":number,"vendor":"store/company name","description":"brief description of items/services","category":"one of: repairs, capital, supplies, utilities, insurance, taxes, management, cleaning, travel, furnishing, landscaping, legal, marketing, mortgage, other"}. If you cannot determine a field, use null.' },
+          ],
+        }],
+      }),
+    });
+
+    if (!anthropicRes.ok) {
+      const errText = await anthropicRes.text();
+      console.error('Claude API error:', anthropicRes.status, errText);
+      return res.status(502).json({ error: 'OCR service error', details: errText });
+    }
+
+    const anthropicData = await anthropicRes.json();
+    const text = anthropicData.content?.find(c => c.type === 'text')?.text || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+
+    try {
+      const parsed = JSON.parse(clean);
+      res.json({ success: true, parsed });
+    } catch (pe) {
+      console.error('OCR parse error:', pe, clean);
+      res.json({ success: true, parsed: null, raw: clean });
+    }
+  } catch (err) {
+    console.error('OCR error:', err);
+    res.status(500).json({ error: 'OCR failed: ' + err.message });
+  }
+});
+
 // GET /api/expenses/export?year=2026
 app.get('/api/expenses/export', authenticate, (req, res) => {
   const year = req.query.year || new Date().getFullYear().toString();
