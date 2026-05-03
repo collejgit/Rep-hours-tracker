@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,34 +15,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        :root{
-            /* Public site palette — coastal luxury */
-            --sand:#f5f0e8;--sand-dark:#e8e0d0;--ocean:#1a3a5c;--ocean-light:#2d5f8a;
-            --seafoam:#6ba5a5;--seafoam-light:#8ec4c4;--coral:#c4704b;--shell:#faf7f2;
-            --driftwood:#6b5e4f;--navy:#1a1a2e;--text-dark:#2c2c2c;--text-mid:#5a5a5a;
-            /* Admin palette (same dark theme as before) */
-            --bg:#0c0c14;--bg-card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);
-            --border-light:rgba(255,255,255,0.1);--text:#f0f0f0;--text-dim:rgba(255,255,255,0.55);
-            --text-muted:rgba(255,255,255,0.35);--text-faint:rgba(255,255,255,0.2);
-            --accent:#6366f1;--accent-light:#818cf8;--accent-soft:#a5b4fc;
-            --accent-glow:rgba(99,102,241,0.3);--green:#34d399;--yellow:#fbbf24;--red:#f87171;
-            --font:'DM Sans',-apple-system,sans-serif;--serif:'Cormorant Garamond',Georgia,serif;
-            --mono:'JetBrains Mono',monospace;
-        }
-        html{height:100%;scroll-behavior:smooth}
-        body{min-height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--shell);color:var(--text-dark)}
-        #root{min-height:100vh}
-        input,select,textarea,button{font-family:var(--font)}
-        input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7)}
-        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:4px}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-        .fu{animation:fadeUp .5s ease both}.fu1{animation-delay:.1s}.fu2{animation-delay:.2s}.fu3{animation-delay:.3s}
-        .fi{animation:fadeIn .6s ease both}
-        .tap{transition:transform .15s,opacity .15s}.tap:active{transform:scale(.97);opacity:.85}
-        /* Admin overrides when in admin mode */
+        :root{--sand:#f5f0e8;--sand-dark:#e8e0d0;--ocean:#1a3a5c;--ocean-light:#2d5f8a;--seafoam:#6ba5a5;--seafoam-light:#8ec4c4;--coral:#c4704b;--shell:#faf7f2;--driftwood:#6b5e4f;--navy:#1a1a2e;--text-dark:#2c2c2c;--text-mid:#5a5a5a;--bg:#0c0c14;--bg-card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);--border-light:rgba(255,255,255,0.1);--text:#f0f0f0;--text-dim:rgba(255,255,255,0.55);--text-muted:rgba(255,255,255,0.35);--text-faint:rgba(255,255,255,0.2);--accent:#6366f1;--accent-light:#818cf8;--accent-soft:#a5b4fc;--accent-glow:rgba(99,102,241,0.3);--green:#34d399;--yellow:#fbbf24;--red:#f87171;--font:'DM Sans',-apple-system,sans-serif;--serif:'Cormorant Garamond',Georgia,serif;--mono:'JetBrains Mono',monospace}
+        html{height:100%;scroll-behavior:smooth}body{min-height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--shell);color:var(--text-dark)}#root{min-height:100vh}input,select,textarea,button{font-family:var(--font)}input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7)}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:4px}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}.fu{animation:fadeUp .5s ease both}.fu1{animation-delay:.1s}.fu2{animation-delay:.2s}.fu3{animation-delay:.3s}.fi{animation:fadeIn .6s ease both}.tap{transition:transform .15s,opacity .15s}.tap:active{transform:scale(.97);opacity:.85}
         body.admin-mode{background:var(--bg);color:var(--text);overflow:hidden}
     </style>
 </head>
@@ -50,1000 +26,380 @@
 <script type="text/babel">
 const {useState,useEffect,useCallback,useRef}=React;
 const API='/api';
-
-// ══════════════════════════════════════════════════
-// SHARED CONSTANTS & HELPERS
-// ══════════════════════════════════════════════════
-const CATS=[
-    {id:'property_mgmt',label:'Property Management',icon:'🏠'},{id:'repairs',label:'Repairs & Maintenance',icon:'🔧'},
-    {id:'construction',label:'Construction / Improvements',icon:'🏗️'},{id:'travel',label:'Travel (NJ ↔ NC)',icon:'🚗'},
-    {id:'bookings',label:'Booking & Guest Mgmt',icon:'📅'},{id:'records',label:'Records & Accounting',icon:'📋'},
-    {id:'cleaning',label:'Cleaning & Turnover',icon:'🧹'},{id:'communication',label:'Calls / Emails / Texts',icon:'📞'},
-    {id:'shopping',label:'Shopping for Properties',icon:'🛒'},{id:'inspection',label:'Inspections & Walkthroughs',icon:'🔍'},
-    {id:'other',label:'Other RE Activity',icon:'📝'},
-];
+const CATS=[{id:'property_mgmt',label:'Property Management',icon:'🏠'},{id:'repairs',label:'Repairs & Maintenance',icon:'🔧'},{id:'construction',label:'Construction / Improvements',icon:'🏗️'},{id:'travel',label:'Travel (NJ ↔ NC)',icon:'🚗'},{id:'bookings',label:'Booking & Guest Mgmt',icon:'📅'},{id:'records',label:'Records & Accounting',icon:'📋'},{id:'cleaning',label:'Cleaning & Turnover',icon:'🧹'},{id:'communication',label:'Calls / Emails / Texts',icon:'📞'},{id:'shopping',label:'Shopping for Properties',icon:'🛒'},{id:'inspection',label:'Inspections & Walkthroughs',icon:'🔍'},{id:'other',label:'Other RE Activity',icon:'📝'}];
 const PROPS=[{id:'all',label:'All Properties'},{id:'salt_house',label:'Salt House'},{id:'kdh',label:'KDH'},{id:'lighthouse',label:'Lighthouse'}];
+const EXP_CATS=[{id:'repairs',label:'Repairs & Maintenance',icon:'🔧'},{id:'capital',label:'Capital Improvements',icon:'🏗️'},{id:'supplies',label:'Supplies & Materials',icon:'🛒'},{id:'utilities',label:'Utilities',icon:'💡'},{id:'insurance',label:'Insurance',icon:'🛡️'},{id:'taxes',label:'Property Taxes',icon:'🏛️'},{id:'management',label:'Management Fees',icon:'📋'},{id:'cleaning',label:'Cleaning & Turnover',icon:'🧹'},{id:'travel',label:'Travel',icon:'🚗'},{id:'furnishing',label:'Furnishing & Decor',icon:'🛋️'},{id:'landscaping',label:'Landscaping',icon:'🌿'},{id:'legal',label:'Legal & Professional',icon:'⚖️'},{id:'marketing',label:'Marketing & Advertising',icon:'📣'},{id:'mortgage',label:'Mortgage Interest',icon:'🏦'},{id:'other',label:'Other',icon:'📝'}];
 const GOAL=750;
-const getToken=()=>localStorage.getItem('rep_token');
-const setToken=t=>localStorage.setItem('rep_token',t);
-const clearToken=()=>localStorage.removeItem('rep_token');
-
-async function api(ep,opts={}){
-    const t=getToken();
-    const r=await fetch(`${API}/${ep}`,{...opts,headers:{'Content-Type':'application/json',...(t?{Authorization:`Bearer ${t}`}:{}),...opts.headers}});
-    if(r.status===401){clearToken();return null}
-    if(r.headers.get('content-type')?.includes('text/csv')){
-        const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');
-        a.href=u;a.download=`REP_Hours_${new Date().getFullYear()}.csv`;a.click();URL.revokeObjectURL(u);return{success:true};
-    }
-    return r.json();
-}
+const getToken=()=>localStorage.getItem('rep_token');const setToken=t=>localStorage.setItem('rep_token',t);const clearToken=()=>localStorage.removeItem('rep_token');
+async function api(ep,opts={}){const t=getToken();const r=await fetch(`${API}/${ep}`,{...opts,headers:{'Content-Type':'application/json',...(t?{Authorization:`Bearer ${t}`}:{}),...opts.headers}});if(r.status===401){clearToken();return null}if(r.headers.get('content-type')?.includes('text/csv')){const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='export.csv';a.click();URL.revokeObjectURL(u);return{success:true}}return r.json()}
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const fmtDate=s=>{const d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'})};
 const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return mn>0?`${hr}h ${mn}m`:`${hr}h`};
+const fmtD=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // ══════════════════════════════════════════════════
-// PUBLIC SITE COMPONENTS
+// CSV UPLOAD COMPONENT (shared)
 // ══════════════════════════════════════════════════
+function CSVUpload({onUpload,type,templateCols}){
+    const[dragging,setDragging]=useState(false);
+    const[result,setResult]=useState(null);
+    const[uploading,setUploading]=useState(false);
+    const fileRef=useRef(null);
 
-function PublicHeader({onAdmin}){
-    const[scrolled,setScrolled]=useState(false);
-    useEffect(()=>{const h=()=>setScrolled(window.scrollY>60);window.addEventListener('scroll',h);return()=>window.removeEventListener('scroll',h)},[]);
-    return(<header style={{position:'fixed',top:0,left:0,right:0,zIndex:50,transition:'all .3s',
-        background:scrolled?'rgba(250,247,242,.95)':'transparent',backdropFilter:scrolled?'blur(16px)':'none',
-        borderBottom:scrolled?'1px solid rgba(0,0,0,.06)':'none',padding:scrolled?'12px 24px':'20px 24px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div>
-                <div style={{fontFamily:'var(--serif)',fontSize:scrolled?20:24,fontWeight:600,color:scrolled?'var(--ocean)':'#fff',
-                    letterSpacing:1,transition:'all .3s',textShadow:scrolled?'none':'0 2px 8px rgba(0,0,0,.3)'}}>
-                    Colletti Coastal Properties
-                </div>
-                {!scrolled&&<div style={{fontSize:11,color:'rgba(255,255,255,.7)',letterSpacing:2,textTransform:'uppercase',marginTop:2,
-                    textShadow:'0 1px 4px rgba(0,0,0,.3)'}}>Outer Banks Oceanfront Rentals</div>}
-            </div>
-            <button onClick={onAdmin} style={{padding:'8px 16px',borderRadius:8,border:`1px solid ${scrolled?'var(--ocean)':'rgba(255,255,255,.4)'}`,
-                background:'transparent',color:scrolled?'var(--ocean)':'#fff',fontSize:12,cursor:'pointer',letterSpacing:1,
-                textTransform:'uppercase',fontFamily:'var(--font)',fontWeight:600,transition:'all .3s'}}>
-                Owner Login
-            </button>
-        </div>
-    </header>);
-}
+    const processFile=async(file)=>{
+        setUploading(true);setResult(null);
+        const text=await file.text();
+        try{
+            const r=await api(`${type}/import`,{method:'POST',body:JSON.stringify({csv:text})});
+            setResult(r);if(r?.success)onUpload();
+        }catch(e){setResult({error:e.message})}
+        setUploading(false);
+    };
+    const handleFile=e=>{const f=e.target.files?.[0];if(f)processFile(f);if(fileRef.current)fileRef.current.value=''};
+    const handleDrop=e=>{e.preventDefault();setDragging(false);const f=e.dataTransfer.files?.[0];if(f)processFile(f)};
 
-function HeroBanner(){
-    return(<div style={{position:'relative',height:'85vh',minHeight:500,overflow:'hidden',
-        background:'linear-gradient(135deg, #1a3a5c 0%, #2d5f8a 50%, #6ba5a5 100%)'}}>
-        <div style={{position:'absolute',inset:0,background:'url("data:image/svg+xml,'+encodeURIComponent(
-            `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><path d='M0 50 Q25 30 50 50 T100 50' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'/><path d='M0 70 Q25 50 50 70 T100 70' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/></svg>`
-        )+'")',backgroundSize:'100px 100px'}}/>
-        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'40%',background:'linear-gradient(transparent,rgba(26,26,46,.4))'}}/>
-        <div style={{position:'relative',height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-            textAlign:'center',padding:'0 24px',color:'#fff'}}>
-            <div className="fu" style={{fontSize:13,letterSpacing:4,textTransform:'uppercase',color:'rgba(255,255,255,.6)',marginBottom:16}}>
-                The Outer Banks, North Carolina
-            </div>
-            <h1 className="fu fu1" style={{fontFamily:'var(--serif)',fontSize:'clamp(36px, 7vw, 72px)',fontWeight:400,lineHeight:1.1,
-                maxWidth:800,textShadow:'0 4px 24px rgba(0,0,0,.2)',margin:'0 0 20px'}}>
-                Your Oceanfront<br/>Escape Awaits
-            </h1>
-            <p className="fu fu2" style={{fontSize:17,maxWidth:520,lineHeight:1.6,color:'rgba(255,255,255,.8)',marginBottom:32}}>
-                Three exceptional beachfront homes in Corolla and Kill Devil Hills —<br/>managed by Twiddy & Company since 1978.
-            </p>
-            <a href="#properties" className="fu fu3 tap" style={{display:'inline-block',padding:'14px 36px',borderRadius:40,
-                background:'rgba(255,255,255,.15)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,.25)',
-                color:'#fff',fontSize:14,fontWeight:600,letterSpacing:1.5,textTransform:'uppercase',textDecoration:'none',
-                cursor:'pointer',transition:'all .3s'}}>
-                Explore Our Homes
-            </a>
+    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
+    return(<div style={CS}>
+        <div style={{fontSize:15,fontWeight:600,marginBottom:12,color:'var(--text)'}}>📤 Import from CSV</div>
+        <div onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={handleDrop}
+            style={{padding:24,borderRadius:12,border:`2px dashed ${dragging?'var(--accent)':'var(--border-light)'}`,textAlign:'center',
+                background:dragging?'rgba(99,102,241,.05)':'transparent',transition:'all .2s',marginBottom:12}}>
+            <label className="tap" style={{cursor:'pointer',display:'block'}}>
+                <div style={{fontSize:28,marginBottom:6}}>{uploading?'⏳':'📄'}</div>
+                <div style={{fontSize:13,color:'var(--text-dim)',fontWeight:600}}>{uploading?'Importing…':'Drop CSV file here or click to browse'}</div>
+                <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>Max 2,000 rows per upload</div>
+                <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} style={{display:'none'}} disabled={uploading}/>
+            </label>
         </div>
+        <div style={{fontSize:11,color:'var(--text-muted)',lineHeight:1.6}}>
+            <strong style={{color:'var(--text-dim)'}}>Expected columns:</strong> {templateCols}
+        </div>
+        {result&&<div style={{marginTop:12,padding:12,borderRadius:10,
+            background:result.success?'rgba(52,211,153,.08)':'rgba(248,113,113,.08)',
+            border:`1px solid ${result.success?'rgba(52,211,153,.2)':'rgba(248,113,113,.2)'}`,fontSize:13}}>
+            {result.success?<div style={{color:'var(--green)'}}>✓ Imported {result.imported} of {result.total} rows{result.skipped>0&&<span> ({result.skipped} skipped)</span>}
+                {result.errors?.length>0&&<div style={{marginTop:6,fontSize:11,color:'var(--yellow)'}}>{result.errors.map((e,i)=><div key={i}>{e}</div>)}</div>}</div>
+            :<div style={{color:'var(--red)'}}>✕ {result.error||'Upload failed'}</div>}
+        </div>}
     </div>);
 }
 
-function PropertyCard({prop,index}){
-    const hasPhotos = prop.photos && prop.photos.length > 0;
-    const placeholderColors = ['#2d5f8a','#6ba5a5','#c4704b'];
-    const[photoIdx,setPhotoIdx]=useState(0);
-    const numPhotos=hasPhotos?prop.photos.length:0;
-    const nextPhoto=()=>setPhotoIdx(i=>(i+1)%numPhotos);
-    const prevPhoto=()=>setPhotoIdx(i=>(i-1+numPhotos)%numPhotos);
-
-    return(<div className={`fu fu${index+1}`} style={{background:'#fff',borderRadius:16,overflow:'hidden',
-        boxShadow:'0 4px 24px rgba(0,0,0,.06)',transition:'transform .3s,box-shadow .3s',cursor:'default',
-        marginBottom:0}} onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 12px 40px rgba(0,0,0,.1)'}}
-        onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 24px rgba(0,0,0,.06)'}}>
-        {/* Image area with slideshow */}
-        <div style={{height:280,position:'relative',overflow:'hidden',
-            background:hasPhotos?`url(${prop.photos[photoIdx].url}) center/cover`:`linear-gradient(135deg, ${placeholderColors[index]}, ${placeholderColors[(index+1)%3]})`}}>
-            {!hasPhotos&&<div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'rgba(255,255,255,.7)'}}>
-                <span style={{fontSize:48,marginBottom:8}}>{['🏖️','🌊','🏡'][index]}</span>
-                <span style={{fontSize:13,letterSpacing:2,textTransform:'uppercase'}}>Photos Coming Soon</span>
-            </div>}
-            {/* Nav arrows */}
-            {numPhotos>1&&<>
-                <button onClick={e=>{e.stopPropagation();prevPhoto()}} style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',
-                    width:36,height:36,borderRadius:'50%',border:'none',background:'rgba(0,0,0,.4)',backdropFilter:'blur(4px)',
-                    color:'#fff',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
-                    zIndex:2,transition:'background .2s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,.6)'}
-                    onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,.4)'}>‹</button>
-                <button onClick={e=>{e.stopPropagation();nextPhoto()}} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',
-                    width:36,height:36,borderRadius:'50%',border:'none',background:'rgba(0,0,0,.4)',backdropFilter:'blur(4px)',
-                    color:'#fff',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
-                    zIndex:2,transition:'background .2s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,.6)'}
-                    onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,.4)'}>›</button>
-                {/* Dots */}
-                <div style={{position:'absolute',bottom:48,left:'50%',transform:'translateX(-50%)',display:'flex',gap:5,zIndex:2}}>
-                    {prop.photos.map((_,i)=><button key={i} onClick={e=>{e.stopPropagation();setPhotoIdx(i)}}
-                        style={{width:i===photoIdx?16:7,height:7,borderRadius:4,border:'none',
-                            background:i===photoIdx?'#fff':'rgba(255,255,255,.5)',cursor:'pointer',transition:'all .2s',padding:0}}/>)}
-                </div>
-            </>}
-            {/* Caption overlay */}
-            {hasPhotos&&prop.photos[photoIdx].caption&&<div style={{position:'absolute',top:10,right:10,
-                padding:'4px 10px',borderRadius:6,background:'rgba(0,0,0,.5)',backdropFilter:'blur(4px)',
-                fontSize:11,color:'rgba(255,255,255,.85)',maxWidth:'60%',zIndex:2}}>{prop.photos[photoIdx].caption}</div>}
-            <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'40px 24px 16px',
-                background:'linear-gradient(transparent,rgba(0,0,0,.6))'}}>
-                <div style={{display:'flex',gap:8}}>
-                    <span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.2)',backdropFilter:'blur(4px)',
-                        fontSize:11,color:'#fff',fontWeight:600,letterSpacing:.5}}>{prop.position}</span>
-                    {prop.petFriendly&&<span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.2)',
-                        backdropFilter:'blur(4px)',fontSize:11,color:'#fff',fontWeight:600}}>🐕 Pet-Friendly</span>}
-                    {numPhotos>1&&<span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.15)',
-                        fontSize:11,color:'rgba(255,255,255,.8)'}}>{photoIdx+1}/{numPhotos}</span>}
-                </div>
-            </div>
-        </div>
-
-        {/* Content */}
+// ══════════════════════════════════════════════════
+// PUBLIC SITE
+// ══════════════════════════════════════════════════
+function PublicHeader({onAdmin}){const[sc,setSc]=useState(false);useEffect(()=>{const h=()=>setSc(window.scrollY>60);window.addEventListener('scroll',h);return()=>window.removeEventListener('scroll',h)},[]);
+    return(<header style={{position:'fixed',top:0,left:0,right:0,zIndex:50,transition:'all .3s',background:sc?'rgba(250,247,242,.95)':'transparent',backdropFilter:sc?'blur(16px)':'none',borderBottom:sc?'1px solid rgba(0,0,0,.06)':'none',padding:sc?'12px 24px':'20px 24px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div><div style={{fontFamily:'var(--serif)',fontSize:sc?20:24,fontWeight:600,color:sc?'var(--ocean)':'#fff',letterSpacing:1,transition:'all .3s',textShadow:sc?'none':'0 2px 8px rgba(0,0,0,.3)'}}>Colletti Coastal Properties</div>
+                {!sc&&<div style={{fontSize:11,color:'rgba(255,255,255,.7)',letterSpacing:2,textTransform:'uppercase',marginTop:2,textShadow:'0 1px 4px rgba(0,0,0,.3)'}}>Outer Banks Oceanfront Rentals</div>}</div>
+            <button onClick={onAdmin} style={{padding:'8px 16px',borderRadius:8,border:`1px solid ${sc?'var(--ocean)':'rgba(255,255,255,.4)'}`,background:'transparent',color:sc?'var(--ocean)':'#fff',fontSize:12,cursor:'pointer',letterSpacing:1,textTransform:'uppercase',fontFamily:'var(--font)',fontWeight:600,transition:'all .3s'}}>Owner Login</button>
+        </div></header>)}
+function HeroBanner(){return(<div style={{position:'relative',height:'85vh',minHeight:500,overflow:'hidden',background:'linear-gradient(135deg, #1a3a5c 0%, #2d5f8a 50%, #6ba5a5 100%)'}}>
+        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'40%',background:'linear-gradient(transparent,rgba(26,26,46,.4))'}}/>
+        <div style={{position:'relative',height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'0 24px',color:'#fff'}}>
+            <div className="fu" style={{fontSize:13,letterSpacing:4,textTransform:'uppercase',color:'rgba(255,255,255,.6)',marginBottom:16}}>The Outer Banks, North Carolina</div>
+            <h1 className="fu fu1" style={{fontFamily:'var(--serif)',fontSize:'clamp(36px, 7vw, 72px)',fontWeight:400,lineHeight:1.1,maxWidth:800,textShadow:'0 4px 24px rgba(0,0,0,.2)',margin:'0 0 20px'}}>Your Oceanfront<br/>Escape Awaits</h1>
+            <p className="fu fu2" style={{fontSize:17,maxWidth:520,lineHeight:1.6,color:'rgba(255,255,255,.8)',marginBottom:32}}>Three exceptional beachfront homes in Corolla and Kill Devil Hills —<br/>managed by Twiddy & Company since 1978.</p>
+            <a href="#properties" className="fu fu3 tap" style={{display:'inline-block',padding:'14px 36px',borderRadius:40,background:'rgba(255,255,255,.15)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,.25)',color:'#fff',fontSize:14,fontWeight:600,letterSpacing:1.5,textTransform:'uppercase',textDecoration:'none',cursor:'pointer'}}>Explore Our Homes</a>
+        </div></div>)}
+function PropertyCard({prop,index}){const hasPhotos=prop.photos&&prop.photos.length>0;const pc=['#2d5f8a','#6ba5a5','#c4704b'];const[pi,setPi]=useState(0);const np=hasPhotos?prop.photos.length:0;
+    return(<div className={`fu fu${index+1}`} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 4px 24px rgba(0,0,0,.06)',transition:'transform .3s,box-shadow .3s'}} onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 12px 40px rgba(0,0,0,.1)'}} onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 24px rgba(0,0,0,.06)'}}>
+        <div style={{height:280,position:'relative',overflow:'hidden',background:hasPhotos?`url(${prop.photos[pi].url}) center/cover`:`linear-gradient(135deg, ${pc[index]}, ${pc[(index+1)%3]})`}}>
+            {!hasPhotos&&<div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'rgba(255,255,255,.7)'}}><span style={{fontSize:48,marginBottom:8}}>{['🏖️','🌊','🏡'][index]}</span><span style={{fontSize:13,letterSpacing:2,textTransform:'uppercase'}}>Photos Coming Soon</span></div>}
+            {np>1&&<><button onClick={e=>{e.stopPropagation();setPi(i=>(i-1+np)%np)}} style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',width:36,height:36,borderRadius:'50%',border:'none',background:'rgba(0,0,0,.4)',color:'#fff',fontSize:18,cursor:'pointer',zIndex:2}}>‹</button>
+                <button onClick={e=>{e.stopPropagation();setPi(i=>(i+1)%np)}} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',width:36,height:36,borderRadius:'50%',border:'none',background:'rgba(0,0,0,.4)',color:'#fff',fontSize:18,cursor:'pointer',zIndex:2}}>›</button>
+                <div style={{position:'absolute',bottom:48,left:'50%',transform:'translateX(-50%)',display:'flex',gap:5,zIndex:2}}>{prop.photos.map((_,i)=><button key={i} onClick={e=>{e.stopPropagation();setPi(i)}} style={{width:i===pi?16:7,height:7,borderRadius:4,border:'none',background:i===pi?'#fff':'rgba(255,255,255,.5)',cursor:'pointer',padding:0}}/>)}</div></>}
+            <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'40px 24px 16px',background:'linear-gradient(transparent,rgba(0,0,0,.6))'}}>
+                <div style={{display:'flex',gap:8}}><span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.2)',backdropFilter:'blur(4px)',fontSize:11,color:'#fff',fontWeight:600}}>{prop.position}</span>
+                    {prop.petFriendly&&<span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.2)',backdropFilter:'blur(4px)',fontSize:11,color:'#fff',fontWeight:600}}>🐕 Pet-Friendly</span>}
+                    {np>1&&<span style={{padding:'4px 10px',borderRadius:20,background:'rgba(255,255,255,.15)',fontSize:11,color:'rgba(255,255,255,.8)'}}>{pi+1}/{np}</span>}</div></div></div>
         <div style={{padding:'24px 24px 20px'}}>
-            <div style={{fontSize:11,color:'var(--seafoam)',fontWeight:600,letterSpacing:2,textTransform:'uppercase',marginBottom:6}}>
-                {prop.location} · {prop.code}
-            </div>
-            <h2 style={{fontFamily:'var(--serif)',fontSize:28,fontWeight:500,color:'var(--ocean)',marginBottom:8,lineHeight:1.2}}>
-                {prop.name}
-            </h2>
-
+            <div style={{fontSize:11,color:'var(--seafoam)',fontWeight:600,letterSpacing:2,textTransform:'uppercase',marginBottom:6}}>{prop.location} · {prop.code}</div>
+            <h2 style={{fontFamily:'var(--serif)',fontSize:28,fontWeight:500,color:'var(--ocean)',marginBottom:8,lineHeight:1.2}}>{prop.name}</h2>
             <div style={{display:'flex',gap:16,marginBottom:16,paddingBottom:16,borderBottom:'1px solid var(--sand-dark)'}}>
                 <div style={{fontSize:14,color:'var(--text-mid)'}}>🛏️ <strong>{prop.bedrooms}</strong> Bedrooms</div>
                 <div style={{fontSize:14,color:'var(--text-mid)'}}>🛁 <strong>{prop.bathrooms}</strong> Baths</div>
-                <div style={{fontSize:14,color:'var(--text-mid)'}}>👥 Sleeps <strong>{prop.sleeps}</strong></div>
-            </div>
-
-            <p style={{fontSize:15,lineHeight:1.7,color:'var(--text-mid)',marginBottom:20}}>
-                {prop.description}
-            </p>
-
-            {/* Highlights */}
-            <div style={{marginBottom:20}}>
-                {prop.highlights.map((h,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'flex-start',marginBottom:8}}>
-                    <span style={{color:'var(--seafoam)',fontSize:14,marginTop:2}}>✦</span>
-                    <span style={{fontSize:14,color:'var(--text-mid)',lineHeight:1.5}}>{h}</span>
-                </div>)}
-            </div>
-
-            {/* Amenities pills */}
-            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:20}}>
-                {prop.amenities.map(a=><span key={a} style={{padding:'5px 12px',borderRadius:20,
-                    background:'var(--sand)',fontSize:12,color:'var(--driftwood)',fontWeight:500}}>{a}</span>)}
-            </div>
-
-            {/* CTA */}
-            <a href={prop.twiddyUrl} target="_blank" rel="noopener noreferrer" className="tap" style={{
-                display:'block',textAlign:'center',padding:'14px 24px',borderRadius:12,
-                background:'var(--ocean)',color:'#fff',fontSize:14,fontWeight:600,letterSpacing:.5,
-                textDecoration:'none',transition:'background .3s'}}>
-                Check Availability on Twiddy
-            </a>
-            <div style={{textAlign:'center',marginTop:8,fontSize:12,color:'var(--text-mid)'}}>
-                or call {prop.twiddyPhone} — ask for #{prop.code}
-            </div>
-        </div>
-    </div>);
-}
-
-function PublicFooter(){
-    return(<footer style={{background:'var(--navy)',color:'rgba(255,255,255,.5)',padding:'48px 24px 32px',textAlign:'center'}}>
-        <div style={{maxWidth:800,margin:'0 auto'}}>
-            <div style={{fontFamily:'var(--serif)',fontSize:24,fontWeight:500,color:'rgba(255,255,255,.8)',marginBottom:8}}>
-                Colletti Coastal Properties
-            </div>
-            <div style={{fontSize:13,marginBottom:24,letterSpacing:1}}>
-                Oceanfront Vacation Rentals · Outer Banks, North Carolina
-            </div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,.3)'}}>
-                All bookings handled by <a href="https://www.twiddy.com" target="_blank" rel="noopener noreferrer"
-                    style={{color:'rgba(255,255,255,.5)',textDecoration:'none'}}>Twiddy & Company</a> · © {new Date().getFullYear()}
-            </div>
-        </div>
-    </footer>);
-}
-
-function PublicSite({onAdmin}){
-    const[properties,setProperties]=useState([]);
-    const[loading,setLoading]=useState(true);
-    useEffect(()=>{
-        fetch(`${API}/properties`).then(r=>r.json()).then(d=>{setProperties(d);setLoading(false)}).catch(()=>setLoading(false));
-        document.body.classList.remove('admin-mode');
-    },[]);
-
-    return(<div style={{minHeight:'100vh'}}>
-        <PublicHeader onAdmin={onAdmin}/>
-        <HeroBanner/>
-
-        {/* Properties Section */}
+                <div style={{fontSize:14,color:'var(--text-mid)'}}>👥 Sleeps <strong>{prop.sleeps}</strong></div></div>
+            <p style={{fontSize:15,lineHeight:1.7,color:'var(--text-mid)',marginBottom:20}}>{prop.description}</p>
+            <div style={{marginBottom:20}}>{prop.highlights.map((h,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'flex-start',marginBottom:8}}><span style={{color:'var(--seafoam)',fontSize:14,marginTop:2}}>✦</span><span style={{fontSize:14,color:'var(--text-mid)',lineHeight:1.5}}>{h}</span></div>)}</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:20}}>{prop.amenities.map(a=><span key={a} style={{padding:'5px 12px',borderRadius:20,background:'var(--sand)',fontSize:12,color:'var(--driftwood)',fontWeight:500}}>{a}</span>)}</div>
+            <a href={prop.twiddyUrl} target="_blank" rel="noopener noreferrer" className="tap" style={{display:'block',textAlign:'center',padding:'14px 24px',borderRadius:12,background:'var(--ocean)',color:'#fff',fontSize:14,fontWeight:600,textDecoration:'none'}}>Check Availability on Twiddy</a>
+            <div style={{textAlign:'center',marginTop:8,fontSize:12,color:'var(--text-mid)'}}>or call {prop.twiddyPhone} — ask for #{prop.code}</div>
+        </div></div>)}
+function PublicSite({onAdmin}){const[properties,setProperties]=useState([]);const[loading,setLoading]=useState(true);
+    useEffect(()=>{fetch(`${API}/properties`).then(r=>r.json()).then(d=>{setProperties(d);setLoading(false)}).catch(()=>setLoading(false));document.body.classList.remove('admin-mode')},[]);
+    return(<div style={{minHeight:'100vh'}}><PublicHeader onAdmin={onAdmin}/><HeroBanner/>
         <section id="properties" style={{maxWidth:1200,margin:'0 auto',padding:'64px 24px'}}>
-            <div style={{textAlign:'center',marginBottom:48}} className="fu">
-                <div style={{fontSize:12,letterSpacing:3,textTransform:'uppercase',color:'var(--seafoam)',fontWeight:600,marginBottom:8}}>
-                    Our Properties
-                </div>
-                <h2 style={{fontFamily:'var(--serif)',fontSize:'clamp(28px, 5vw, 44px)',fontWeight:400,color:'var(--ocean)',marginBottom:12}}>
-                    Three Homes, One Incredible Coastline
-                </h2>
-                <p style={{fontSize:16,color:'var(--text-mid)',maxWidth:560,margin:'0 auto',lineHeight:1.6}}>
-                    Each of our oceanfront homes offers a unique Outer Banks experience — from the quiet
-                    beaches of Pine Island to the vibrant Whalehead community.
-                </p>
-            </div>
-
-            {loading?<div style={{textAlign:'center',padding:60,color:'var(--text-mid)'}}>Loading properties...</div>:
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(340px, 1fr))',gap:28}}>
-                {properties.map((p,i)=><PropertyCard key={p.key} prop={p} index={i}/>)}
-            </div>}
+            <div style={{textAlign:'center',marginBottom:48}} className="fu"><div style={{fontSize:12,letterSpacing:3,textTransform:'uppercase',color:'var(--seafoam)',fontWeight:600,marginBottom:8}}>Our Properties</div>
+                <h2 style={{fontFamily:'var(--serif)',fontSize:'clamp(28px, 5vw, 44px)',fontWeight:400,color:'var(--ocean)',marginBottom:12}}>Three Homes, One Incredible Coastline</h2>
+                <p style={{fontSize:16,color:'var(--text-mid)',maxWidth:560,margin:'0 auto',lineHeight:1.6}}>Each of our oceanfront homes offers a unique Outer Banks experience — from the quiet beaches of Pine Island to the vibrant Whalehead community.</p></div>
+            {loading?<div style={{textAlign:'center',padding:60}}>Loading...</div>:
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(340px, 1fr))',gap:28}}>{properties.map((p,i)=><PropertyCard key={p.key} prop={p} index={i}/>)}</div>}
         </section>
-
-        {/* About strip */}
-        <section style={{background:'var(--sand)',padding:'48px 24px'}}>
-            <div style={{maxWidth:800,margin:'0 auto',textAlign:'center'}}>
-                <h3 style={{fontFamily:'var(--serif)',fontSize:28,fontWeight:400,color:'var(--ocean)',marginBottom:12}}>
-                    Managed by Twiddy & Company
-                </h3>
-                <p style={{fontSize:15,lineHeight:1.7,color:'var(--text-mid)'}}>
-                    Our homes are exclusively managed by Twiddy & Company, the Outer Banks' most trusted vacation rental
-                    company since 1978. From booking through checkout, their local team provides exceptional hospitality
-                    and 7-day-a-week support.
-                </p>
-            </div>
-        </section>
-
-        <PublicFooter/>
-    </div>);
-}
+        <section style={{background:'var(--sand)',padding:'48px 24px'}}><div style={{maxWidth:800,margin:'0 auto',textAlign:'center'}}>
+            <h3 style={{fontFamily:'var(--serif)',fontSize:28,fontWeight:400,color:'var(--ocean)',marginBottom:12}}>Managed by Twiddy & Company</h3>
+            <p style={{fontSize:15,lineHeight:1.7,color:'var(--text-mid)'}}>Our homes are exclusively managed by Twiddy & Company, the Outer Banks' most trusted vacation rental company since 1978.</p></div></section>
+        <footer style={{background:'var(--navy)',color:'rgba(255,255,255,.5)',padding:'48px 24px 32px',textAlign:'center'}}><div style={{maxWidth:800,margin:'0 auto'}}>
+            <div style={{fontFamily:'var(--serif)',fontSize:24,fontWeight:500,color:'rgba(255,255,255,.8)',marginBottom:8}}>Colletti Coastal Properties</div>
+            <div style={{fontSize:13,marginBottom:24,letterSpacing:1}}>Oceanfront Vacation Rentals · Outer Banks, North Carolina</div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,.3)'}}>All bookings handled by <a href="https://www.twiddy.com" target="_blank" style={{color:'rgba(255,255,255,.5)',textDecoration:'none'}}>Twiddy & Company</a> · © {new Date().getFullYear()}</div></div></footer>
+    </div>)}
 
 // ══════════════════════════════════════════════════
-// ADMIN SECTION (REP Hours — preserved from v1)
+// ADMIN COMPONENTS
 // ══════════════════════════════════════════════════
-
-function AdminLogin({onLogin}){
-    const[pw,setPw]=useState('');const[err,setErr]=useState('');const[ld,setLd]=useState(false);
-    const go=async()=>{setLd(true);setErr('');try{const r=await api('auth',{method:'POST',body:JSON.stringify({password:pw})});
-        if(r?.token){setToken(r.token);onLogin()}else setErr('Invalid password')}catch(e){setErr('Connection error')}setLd(false)};
+function AdminLogin({onLogin}){const[pw,setPw]=useState('');const[err,setErr]=useState('');const[ld,setLd]=useState(false);
+    const go=async()=>{setLd(true);setErr('');try{const r=await api('auth',{method:'POST',body:JSON.stringify({password:pw})});if(r?.token){setToken(r.token);onLogin()}else setErr('Invalid password')}catch(e){setErr('Connection error')}setLd(false)};
     useEffect(()=>{document.body.classList.add('admin-mode');return()=>document.body.classList.remove('admin-mode')},[]);
-    return(<div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,
-        background:'radial-gradient(ellipse at 50% 30%,rgba(99,102,241,.08) 0%,transparent 60%),var(--bg)'}}>
+    return(<div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'radial-gradient(ellipse at 50% 30%,rgba(99,102,241,.08) 0%,transparent 60%),var(--bg)'}}>
         <div className="fu" style={{width:'100%',maxWidth:360,textAlign:'center'}}>
-            <div style={{fontSize:40,marginBottom:8}}>🔒</div>
-            <h1 style={{fontSize:22,fontWeight:700,letterSpacing:-.5,marginBottom:4,color:'var(--text)'}}>Admin Panel</h1>
-            <p style={{fontSize:12,color:'var(--text-muted)',letterSpacing:1.5,textTransform:'uppercase',marginBottom:32}}>
-                Colletti Coastal Properties</p>
-            <input type="password" placeholder="Password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus
-                style={{width:'100%',padding:'14px 18px',borderRadius:12,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:16,outline:'none',marginBottom:12,boxSizing:'border-box'}}/>
-            <button onClick={go} disabled={ld} className="tap" style={{width:'100%',padding:14,borderRadius:12,border:'none',
-                background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',
-                boxShadow:'0 4px 24px var(--accent-glow)',opacity:ld?.6:1}}>{ld?'Signing in…':'Sign In'}</button>
-            {err&&<p style={{marginTop:12,fontSize:13,color:'var(--red)'}}>{err}</p>}
-        </div></div>);
-}
+            <div style={{fontSize:40,marginBottom:8}}>🔒</div><h1 style={{fontSize:22,fontWeight:700,letterSpacing:-.5,marginBottom:4,color:'var(--text)'}}>Admin Panel</h1>
+            <p style={{fontSize:12,color:'var(--text-muted)',letterSpacing:1.5,textTransform:'uppercase',marginBottom:32}}>Colletti Coastal Properties</p>
+            <input type="password" placeholder="Password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus style={{width:'100%',padding:'14px 18px',borderRadius:12,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:16,outline:'none',marginBottom:12,boxSizing:'border-box'}}/>
+            <button onClick={go} disabled={ld} className="tap" style={{width:'100%',padding:14,borderRadius:12,border:'none',background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:'0 4px 24px var(--accent-glow)',opacity:ld?.6:1}}>{ld?'Signing in…':'Sign In'}</button>
+            {err&&<p style={{marginTop:12,fontSize:13,color:'var(--red)'}}>{err}</p>}</div></div>)}
 
-// ── Progress Ring (unchanged) ──
-function Ring({cur,goal,year}){
-    const pct=Math.min(cur/goal,1),r=78,c=Math.PI*2*r,off=c-pct*c;
-    const now=new Date(),isCur=now.getFullYear()===year;
-    const doy=isCur?Math.floor((now-new Date(year,0,1))/864e5)+1:365;
-    const onTrack=pct>=(doy/365)*.85;
-    const color=pct>=1?'var(--green)':onTrack?'var(--yellow)':'var(--red)';
-    const rem=Math.max(0,goal-cur);const wks=isCur?Math.max(1,Math.ceil((new Date(year,11,31)-now)/(864e5*7))):0;
-    return(<div style={{textAlign:'center'}}>
-        <div style={{position:'relative',width:186,height:186,margin:'0 auto 16px'}}>
-            <svg width="186" height="186" viewBox="0 0 186 186"><circle cx="93" cy="93" r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="10"/>
-            <circle cx="93" cy="93" r={r} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
-                transform="rotate(-90 93 93)" style={{transition:'stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)'}}/></svg>
-            <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                <span style={{fontFamily:'var(--mono)',fontSize:34,fontWeight:700}}>{cur.toFixed(1)}</span>
-                <span style={{fontSize:12,color:'var(--text-muted)',letterSpacing:1}}>of {goal} hrs</span>
-                {pct>=1&&<span style={{fontSize:11,color:'var(--green)',fontWeight:700,marginTop:2,letterSpacing:1}}>✓ GOAL MET</span>}
-            </div></div>
-        {rem>0&&isCur&&<div style={{padding:'10px 16px',borderRadius:10,background:color+'11',border:`1px solid ${color}22`,fontSize:13,color:color+'cc'}}>
-            {rem.toFixed(1)} hrs remaining · ~{(rem/wks).toFixed(1)} hrs/week</div>}
-    </div>);
-}
-function MChart({monthly}){const d=Array.from({length:12},(_,i)=>{const f=monthly.find(m=>m.month===i+1);return f?parseFloat(f.total):0});
-    const mx=Math.max(...d,1);return(<div style={{display:'flex',alignItems:'flex-end',gap:5,height:90}}>{d.map((v,i)=><div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
-        <div style={{width:'100%',maxWidth:30,borderRadius:4,height:Math.max(3,(v/mx)*68),background:v>0?'linear-gradient(to top,var(--accent),var(--accent-light))':'rgba(255,255,255,.04)',transition:'height .5s ease'}} title={`${MN[i]}: ${v.toFixed(1)}h`}/>
-        <span style={{fontSize:9,color:'var(--text-faint)'}}>{MN[i].charAt(0)}</span></div>)}</div>);}
+function Ring({cur,goal,year}){const pct=Math.min(cur/goal,1),r=78,c=Math.PI*2*r,off=c-pct*c;const now=new Date(),isCur=now.getFullYear()===year;const doy=isCur?Math.floor((now-new Date(year,0,1))/864e5)+1:365;const onTrack=pct>=(doy/365)*.85;const color=pct>=1?'var(--green)':onTrack?'var(--yellow)':'var(--red)';const rem=Math.max(0,goal-cur);const wks=isCur?Math.max(1,Math.ceil((new Date(year,11,31)-now)/(864e5*7))):0;
+    return(<div style={{textAlign:'center'}}><div style={{position:'relative',width:186,height:186,margin:'0 auto 16px'}}><svg width="186" height="186" viewBox="0 0 186 186"><circle cx="93" cy="93" r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="10"/><circle cx="93" cy="93" r={r} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} transform="rotate(-90 93 93)" style={{transition:'stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)'}}/></svg>
+        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'var(--mono)',fontSize:34,fontWeight:700}}>{cur.toFixed(1)}</span><span style={{fontSize:12,color:'var(--text-muted)',letterSpacing:1}}>of {goal} hrs</span>{pct>=1&&<span style={{fontSize:11,color:'var(--green)',fontWeight:700,marginTop:2}}>✓ GOAL MET</span>}</div></div>
+        {rem>0&&isCur&&<div style={{padding:'10px 16px',borderRadius:10,background:color+'11',border:`1px solid ${color}22`,fontSize:13,color:color+'cc'}}>{rem.toFixed(1)} hrs remaining · ~{(rem/wks).toFixed(1)} hrs/week</div>}</div>)}
+function MChart({monthly}){const d=Array.from({length:12},(_,i)=>{const f=monthly.find(m=>m.month===i+1);return f?parseFloat(f.total):0});const mx=Math.max(...d,1);
+    return(<div style={{display:'flex',alignItems:'flex-end',gap:5,height:90}}>{d.map((v,i)=><div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5}}><div style={{width:'100%',maxWidth:30,borderRadius:4,height:Math.max(3,(v/mx)*68),background:v>0?'linear-gradient(to top,var(--accent),var(--accent-light))':'rgba(255,255,255,.04)',transition:'height .5s ease'}} title={`${MN[i]}: ${v.toFixed(1)}h`}/><span style={{fontSize:9,color:'var(--text-faint)'}}>{MN[i].charAt(0)}</span></div>)}</div>)}
 
-// ── Entry Form (unchanged) ──
-function EForm({onSave,edit,onCancel}){
-    const[dt,setDt]=useState(edit?.entry_date||today());const[hr,setHr]=useState(edit?String(Math.floor(parseFloat(edit.hours))):'');
-    const[mn,setMn]=useState(edit?String(edit.minutes||Math.round((parseFloat(edit.hours)%1)*60)):'');
-    const[cat,setCat]=useState(edit?.category||'');const[prop,setProp]=useState(edit?.property||'all');
-    const[desc,setDesc]=useState(edit?.description||'');const[mi,setMi]=useState(edit?.mileage?String(edit.mileage):'');const[sv,setSv]=useState(false);
-    useEffect(()=>{if(edit){setDt(edit.entry_date);setHr(String(Math.floor(parseFloat(edit.hours))));setMn(String(edit.minutes||Math.round((parseFloat(edit.hours)%1)*60)));
-        setCat(edit.category);setProp(edit.property);setDesc(edit.description);setMi(edit.mileage?String(edit.mileage):'');}else{reset()}},[edit]);
+function EForm({onSave,edit,onCancel}){const[dt,setDt]=useState(edit?.entry_date||today());const[hr,setHr]=useState(edit?String(Math.floor(parseFloat(edit.hours))):'');const[mn,setMn]=useState(edit?String(edit.minutes||Math.round((parseFloat(edit.hours)%1)*60)):'');const[cat,setCat]=useState(edit?.category||'');const[prop,setProp]=useState(edit?.property||'all');const[desc,setDesc]=useState(edit?.description||'');const[mi,setMi]=useState(edit?.mileage?String(edit.mileage):'');const[sv,setSv]=useState(false);
+    useEffect(()=>{if(edit){setDt(edit.entry_date);setHr(String(Math.floor(parseFloat(edit.hours))));setMn(String(edit.minutes||Math.round((parseFloat(edit.hours)%1)*60)));setCat(edit.category);setProp(edit.property);setDesc(edit.description);setMi(edit.mileage?String(edit.mileage):'')}else{reset()}},[edit]);
     const reset=()=>{setDt(today());setHr('');setMn('');setCat('');setDesc('');setMi('')};
-    const go=async()=>{const h=parseFloat(hr||'0'),m=parseFloat(mn||'0'),tot=h+m/60;if(!dt||tot<=0||!cat)return;setSv(true);
-        const p={entry_date:dt,hours:tot,minutes:m,category:cat,property:prop,description:desc,mileage:mi?parseFloat(mi):null};
-        if(edit){p.id=edit.id;await api('entries',{method:'PUT',body:JSON.stringify(p)})}
-        else{await api('entries',{method:'POST',body:JSON.stringify(p)})}
-        setSv(false);onSave();if(!edit)reset()};
-    const IS={width:'100%',padding:'12px 14px',borderRadius:10,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:15,outline:'none',boxSizing:'border-box'};
-    const LS={fontSize:11,color:'var(--text-muted)',marginBottom:5,display:'block',letterSpacing:.8,textTransform:'uppercase'};
+    const go=async()=>{const h=parseFloat(hr||'0'),m=parseFloat(mn||'0'),tot=h+m/60;if(!dt||tot<=0||!cat)return;setSv(true);const p={entry_date:dt,hours:tot,minutes:m,category:cat,property:prop,description:desc,mileage:mi?parseFloat(mi):null};if(edit){p.id=edit.id;await api('entries',{method:'PUT',body:JSON.stringify(p)})}else{await api('entries',{method:'POST',body:JSON.stringify(p)})}setSv(false);onSave();if(!edit)reset()};
+    const IS={width:'100%',padding:'12px 14px',borderRadius:10,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:15,outline:'none',boxSizing:'border-box'};const LS={fontSize:11,color:'var(--text-muted)',marginBottom:5,display:'block',letterSpacing:.8,textTransform:'uppercase'};
     return(<div className="fu" style={{background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20}}>
         <div style={{fontSize:16,fontWeight:600,marginBottom:18}}>{edit?'Edit Entry':'Log Activity'}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:16}}>
-            <div><label style={LS}>Date</label><input type="date" value={dt} onChange={e=>setDt(e.target.value)} style={IS}/></div>
-            <div><label style={LS}>Hours</label><input type="number" inputMode="numeric" min="0" max="24" placeholder="0" value={hr} onChange={e=>setHr(e.target.value)} style={IS}/></div>
-            <div><label style={LS}>Minutes</label><input type="number" inputMode="numeric" min="0" max="59" step="5" placeholder="0" value={mn} onChange={e=>setMn(e.target.value)} style={IS}/></div></div>
-        <div style={{marginBottom:16}}><label style={LS}>Activity</label>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:6}}>
-                {CATS.map(c=><button key={c.id} onClick={()=>setCat(c.id)} className="tap" style={{padding:'9px 10px',borderRadius:9,
-                    border:`1px solid ${cat===c.id?'var(--accent)':'var(--border)'}`,background:cat===c.id?'rgba(99,102,241,.12)':'var(--bg-card)',
-                    color:cat===c.id?'var(--accent-soft)':'var(--text-dim)',fontSize:13,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:7,transition:'all .15s'}}>
-                    <span style={{fontSize:15,flexShrink:0}}>{c.icon}</span><span style={{lineHeight:1.2}}>{c.label}</span></button>)}</div></div>
-        <div style={{display:'grid',gridTemplateColumns:cat==='travel'?'1fr 1fr':'1fr',gap:10,marginBottom:16}}>
-            <div><label style={LS}>Property</label><select value={prop} onChange={e=>setProp(e.target.value)} style={{...IS,appearance:'auto'}}>
-                {PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
-            {cat==='travel'&&<div><label style={LS}>Mileage</label><input type="number" inputMode="decimal" placeholder="Round-trip miles" value={mi} onChange={e=>setMi(e.target.value)} style={IS}/></div>}</div>
-        <div style={{marginBottom:16}}><label style={LS}>Description</label>
-            <textarea rows={3} placeholder="Be specific — this is your IRS documentation…" value={desc} onChange={e=>setDesc(e.target.value)} style={{...IS,resize:'vertical',lineHeight:1.5}}/></div>
-        <div style={{display:'flex',gap:10}}>
-            <button onClick={go} disabled={sv} className="tap" style={{flex:1,padding:'14px 20px',borderRadius:12,border:'none',background:'linear-gradient(135deg,var(--accent),#4f46e5)',
-                color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:'0 4px 24px var(--accent-glow)',opacity:sv?.6:1}}>
-                {sv?'Saving…':edit?'Update Entry':'✓ Log Hours'}</button>
-            {edit&&<button onClick={onCancel} className="tap" style={{padding:'14px 20px',borderRadius:12,border:'1px solid var(--border-light)',
-                background:'transparent',color:'var(--text-dim)',fontSize:15,cursor:'pointer'}}>Cancel</button>}</div></div>);
-}
-
-// ── Entry Row (unchanged) ──
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:16}}><div><label style={LS}>Date</label><input type="date" value={dt} onChange={e=>setDt(e.target.value)} style={IS}/></div><div><label style={LS}>Hours</label><input type="number" inputMode="numeric" min="0" max="24" placeholder="0" value={hr} onChange={e=>setHr(e.target.value)} style={IS}/></div><div><label style={LS}>Minutes</label><input type="number" inputMode="numeric" min="0" max="59" step="5" placeholder="0" value={mn} onChange={e=>setMn(e.target.value)} style={IS}/></div></div>
+        <div style={{marginBottom:16}}><label style={LS}>Activity</label><div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:6}}>{CATS.map(c=><button key={c.id} onClick={()=>setCat(c.id)} className="tap" style={{padding:'9px 10px',borderRadius:9,border:`1px solid ${cat===c.id?'var(--accent)':'var(--border)'}`,background:cat===c.id?'rgba(99,102,241,.12)':'var(--bg-card)',color:cat===c.id?'var(--accent-soft)':'var(--text-dim)',fontSize:13,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:7}}><span style={{fontSize:15}}>{c.icon}</span><span style={{lineHeight:1.2}}>{c.label}</span></button>)}</div></div>
+        <div style={{display:'grid',gridTemplateColumns:cat==='travel'?'1fr 1fr':'1fr',gap:10,marginBottom:16}}><div><label style={LS}>Property</label><select value={prop} onChange={e=>setProp(e.target.value)} style={{...IS,appearance:'auto'}}>{PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>{cat==='travel'&&<div><label style={LS}>Mileage</label><input type="number" inputMode="decimal" placeholder="Round-trip miles" value={mi} onChange={e=>setMi(e.target.value)} style={IS}/></div>}</div>
+        <div style={{marginBottom:16}}><label style={LS}>Description</label><textarea rows={3} placeholder="Be specific — this is your IRS documentation…" value={desc} onChange={e=>setDesc(e.target.value)} style={{...IS,resize:'vertical',lineHeight:1.5}}/></div>
+        <div style={{display:'flex',gap:10}}><button onClick={go} disabled={sv} className="tap" style={{flex:1,padding:'14px 20px',borderRadius:12,border:'none',background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:'0 4px 24px var(--accent-glow)',opacity:sv?.6:1}}>{sv?'Saving…':edit?'Update Entry':'✓ Log Hours'}</button>
+            {edit&&<button onClick={onCancel} className="tap" style={{padding:'14px 20px',borderRadius:12,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:15,cursor:'pointer'}}>Cancel</button>}</div></div>)}
 function ERow({e,onEdit,onDel}){const[cf,setCf]=useState(false);const ct=CATS.find(c=>c.id===e.category);const pr=PROPS.find(p=>p.id===e.property);
-    if(cf)return(<div style={{padding:14,borderRadius:11,background:'rgba(248,113,113,.06)',border:'1px solid rgba(248,113,113,.15)',textAlign:'center',marginBottom:8}}>
-        <p style={{fontSize:13,color:'var(--text-dim)',margin:'0 0 10px'}}>Delete this entry?</p>
-        <div style={{display:'flex',gap:8,justifyContent:'center'}}><button onClick={()=>onDel(e.id)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'none',background:'var(--red)',color:'#fff',fontSize:13,cursor:'pointer'}}>Delete</button>
-        <button onClick={()=>setCf(false)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:13,cursor:'pointer'}}>Cancel</button></div></div>);
-    return(<div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:11,background:'var(--bg-card)',border:'1px solid var(--border)',marginBottom:8}}>
-        <span style={{fontSize:22,flexShrink:0}}>{ct?.icon||'📝'}</span>
-        <div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
-            <span style={{fontSize:14,fontWeight:600,color:'#e8e8e8'}}>{ct?.label}</span>
-            <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:700,color:'var(--accent-soft)',flexShrink:0}}>{fmtH(parseFloat(e.hours))}</span></div>
-            <div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>{fmtDate(e.entry_date)}{e.property!=='all'&&<span> · {pr?.label}</span>}{e.mileage&&<span> · {e.mileage} mi</span>}</div>
-            {e.description&&<div style={{fontSize:12,color:'var(--text-faint)',marginTop:4,lineHeight:1.4}}>{e.description}</div>}</div>
-        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-            <button onClick={()=>onEdit(e)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'var(--text-muted)',cursor:'pointer',fontSize:12}}>✎</button>
-            <button onClick={()=>setCf(true)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'rgba(248,113,113,.5)',cursor:'pointer',fontSize:12}}>✕</button></div></div>);
-}
+    if(cf)return(<div style={{padding:14,borderRadius:11,background:'rgba(248,113,113,.06)',border:'1px solid rgba(248,113,113,.15)',textAlign:'center',marginBottom:8}}><p style={{fontSize:13,color:'var(--text-dim)',margin:'0 0 10px'}}>Delete this entry?</p><div style={{display:'flex',gap:8,justifyContent:'center'}}><button onClick={()=>onDel(e.id)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'none',background:'var(--red)',color:'#fff',fontSize:13,cursor:'pointer'}}>Delete</button><button onClick={()=>setCf(false)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:13,cursor:'pointer'}}>Cancel</button></div></div>);
+    return(<div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:11,background:'var(--bg-card)',border:'1px solid var(--border)',marginBottom:8}}><span style={{fontSize:22,flexShrink:0}}>{ct?.icon||'📝'}</span><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}><span style={{fontSize:14,fontWeight:600,color:'#e8e8e8'}}>{ct?.label}</span><span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:700,color:'var(--accent-soft)',flexShrink:0}}>{fmtH(parseFloat(e.hours))}</span></div><div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>{fmtDate(e.entry_date)}{e.property!=='all'&&<span> · {pr?.label}</span>}{e.mileage&&<span> · {e.mileage} mi</span>}</div>{e.description&&<div style={{fontSize:12,color:'var(--text-faint)',marginTop:4,lineHeight:1.4}}>{e.description}</div>}</div>
+        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}><button onClick={()=>onEdit(e)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'var(--text-muted)',cursor:'pointer',fontSize:12}}>✎</button><button onClick={()=>setCf(true)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'rgba(248,113,113,.5)',cursor:'pointer',fontSize:12}}>✕</button></div></div>)}
 
-// ── Admin Panel (restructured with section tabs) ──
-// ── Photo Manager (Phase 2) ──
+// ── Photo Manager ──
 const PROP_LIST=[{key:'salt_house',name:'Laughing Dolphin',code:'E248'},{key:'kdh',name:'C Dolphin',code:'KD1003'},{key:'lighthouse',name:'Where the Light Began',code:'J10925'}];
-
-function PhotoManager(){
-    const[activeProp,setActiveProp]=useState('salt_house');
-    const[photos,setPhotos]=useState([]);
-    const[loading,setLoading]=useState(true);
-    const[uploading,setUploading]=useState(false);
-    const[dragIdx,setDragIdx]=useState(null);
-    const[dragOverIdx,setDragOverIdx]=useState(null);
-    const[editCaption,setEditCaption]=useState(null); // {id, caption}
-    const[confirmDel,setConfirmDel]=useState(null);
-    const fileRef=useRef(null);
-
-    const fetchPhotos=useCallback(async()=>{
-        setLoading(true);
-        try{
-            const t=getToken();
-            const r=await fetch(`${API}/photos/${activeProp}`,{headers:{Authorization:`Bearer ${t}`}});
-            if(r.ok){const d=await r.json();setPhotos(d)}
-        }catch(e){console.error(e)}
-        setLoading(false);
-    },[activeProp]);
-
-    useEffect(()=>{fetchPhotos()},[fetchPhotos]);
-
-    const handleUpload=async(e)=>{
-        const files=Array.from(e.target.files||[]);
-        if(!files.length)return;
-        setUploading(true);
-        const t=getToken();
-        for(const file of files){
-            const fd=new FormData();
-            fd.append('photo',file);
-            fd.append('property_key',activeProp);
-            fd.append('caption','');
-            try{
-                const r=await fetch(`${API}/photos`,{method:'POST',headers:{Authorization:`Bearer ${t}`},body:fd});
-                if(!r.ok){const err=await r.text();console.error('Upload error:',r.status,err)}
-            }catch(err){console.error('Upload failed:',err)}
-        }
-        if(fileRef.current)fileRef.current.value='';
-        setUploading(false);
-        fetchPhotos();
-    };
-
-    const handleDelete=async(id)=>{
-        const t=getToken();
-        await fetch(`${API}/photos/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${t}`}});
-        setConfirmDel(null);
-        fetchPhotos();
-    };
-
-    const handleCaptionSave=async()=>{
-        if(!editCaption)return;
-        const t=getToken();
-        await fetch(`${API}/photos/${editCaption.id}/caption`,{
-            method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},
-            body:JSON.stringify({caption:editCaption.caption})});
-        setEditCaption(null);
-        fetchPhotos();
-    };
-
-    const handleDragStart=(idx)=>{setDragIdx(idx)};
-    const handleDragOver=(e,idx)=>{e.preventDefault();setDragOverIdx(idx)};
-    const handleDrop=async(idx)=>{
-        if(dragIdx===null||dragIdx===idx)return;
-        const newPhotos=[...photos];
-        const[moved]=newPhotos.splice(dragIdx,1);
-        newPhotos.splice(idx,0,moved);
-        setPhotos(newPhotos);
-        setDragIdx(null);setDragOverIdx(null);
-        // Save new order
-        const t=getToken();
-        const orders=newPhotos.map((p,i)=>({id:p.id,sort_order:i+1}));
-        await fetch(`${API}/photos/reorder`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},
-            body:JSON.stringify({orders})});
-    };
-    const handleDragEnd=()=>{setDragIdx(null);setDragOverIdx(null)};
-
-    // Touch drag support
-    const touchRef=useRef({startIdx:null,el:null});
-    const handleTouchStart=(idx,e)=>{touchRef.current.startIdx=idx};
-    const handleTouchMove=(e)=>{/* handled via dragOverIdx visual only */};
-    const handleTouchEnd=(idx)=>{
-        if(touchRef.current.startIdx!==null&&touchRef.current.startIdx!==idx){
-            handleDrop(idx);
-        }
-        touchRef.current.startIdx=null;
-    };
-
-    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
-    const activePropInfo=PROP_LIST.find(p=>p.key===activeProp);
-
+function PhotoManager(){const[ap,setAp]=useState('salt_house');const[photos,setPhotos]=useState([]);const[ld,setLd]=useState(true);const[ul,setUl]=useState(false);const[di,setDi]=useState(null);const[doi,setDoi]=useState(null);const[ec,setEc]=useState(null);const[cd,setCd]=useState(null);const fr=useRef(null);
+    const fp=useCallback(async()=>{setLd(true);try{const t=getToken();const r=await fetch(`${API}/photos/${ap}`,{headers:{Authorization:`Bearer ${t}`}});if(r.ok)setPhotos(await r.json())}catch(e){}setLd(false)},[ap]);useEffect(()=>{fp()},[fp]);
+    const hu=async e=>{const files=Array.from(e.target.files||[]);if(!files.length)return;setUl(true);const t=getToken();for(const f of files){const fd=new FormData();fd.append('photo',f);fd.append('property_key',ap);fd.append('caption','');try{const r=await fetch(`${API}/photos`,{method:'POST',headers:{Authorization:`Bearer ${t}`},body:fd});if(!r.ok)console.error('Upload error:',await r.text())}catch(e){console.error(e)}}if(fr.current)fr.current.value='';setUl(false);fp()};
+    const hd=async id=>{const t=getToken();await fetch(`${API}/photos/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${t}`}});setCd(null);fp()};
+    const hcs=async()=>{if(!ec)return;const t=getToken();await fetch(`${API}/photos/${ec.id}/caption`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({caption:ec.caption})});setEc(null);fp()};
+    const hdrop=async idx=>{if(di===null||di===idx)return;const np=[...photos];const[m]=np.splice(di,1);np.splice(idx,0,m);setPhotos(np);setDi(null);setDoi(null);const t=getToken();await fetch(`${API}/photos/reorder`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({orders:np.map((p,i)=>({id:p.id,sort_order:i+1}))})})};
+    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};const api_=PROP_LIST.find(p=>p.key===ap);
     return(<div style={{display:'flex',flexDirection:'column',gap:14}}>
-        {/* Property selector tabs */}
-        <div style={{display:'flex',gap:6}}>
-            {PROP_LIST.map(p=><button key={p.key} onClick={()=>setActiveProp(p.key)} className="tap"
-                style={{flex:1,padding:'10px 8px',borderRadius:10,
-                    border:`1px solid ${activeProp===p.key?'var(--accent)':'var(--border)'}`,
-                    background:activeProp===p.key?'rgba(99,102,241,.1)':'var(--bg-card)',
-                    color:activeProp===p.key?'var(--accent-soft)':'var(--text-dim)',
-                    fontSize:12,fontWeight:activeProp===p.key?600:400,cursor:'pointer',fontFamily:'var(--font)',
-                    display:'flex',flexDirection:'column',alignItems:'center',gap:2,transition:'all .2s'}}>
-                <span style={{fontSize:14,fontWeight:600}}>{p.code}</span>
-                <span style={{fontSize:10,opacity:.7}}>{p.name}</span>
-            </button>)}
-        </div>
+        <div style={{display:'flex',gap:6}}>{PROP_LIST.map(p=><button key={p.key} onClick={()=>setAp(p.key)} className="tap" style={{flex:1,padding:'10px 8px',borderRadius:10,border:`1px solid ${ap===p.key?'var(--accent)':'var(--border)'}`,background:ap===p.key?'rgba(99,102,241,.1)':'var(--bg-card)',color:ap===p.key?'var(--accent-soft)':'var(--text-dim)',fontSize:12,fontWeight:ap===p.key?600:400,cursor:'pointer',fontFamily:'var(--font)',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}><span style={{fontSize:14,fontWeight:600}}>{p.code}</span><span style={{fontSize:10,opacity:.7}}>{p.name}</span></button>)}</div>
+        <div className="fu" style={CS}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><div><div style={{fontSize:15,fontWeight:600}}>{api_?.name}</div><div style={{fontSize:12,color:'var(--text-muted)'}}>{photos.length} photos · Drag to reorder</div></div>
+            <label className="tap" style={{padding:'8px 16px',borderRadius:8,background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px var(--accent-glow)',opacity:ul?.5:1}}>{ul?'Uploading…':'+ Upload Photos'}<input ref={fr} type="file" accept="image/*" multiple onChange={hu} style={{display:'none'}}/></label></div>
+            {ld?<div style={{textAlign:'center',padding:40,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading…</div>
+            :photos.length===0?<div style={{textAlign:'center',padding:40,border:'2px dashed var(--border-light)',borderRadius:12}}><div style={{fontSize:36,marginBottom:8}}>📷</div><div style={{fontSize:14,color:'var(--text-muted)'}}>No photos yet</div></div>
+            :<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:10}}>{photos.map((p,idx)=><div key={p.id} draggable onDragStart={()=>setDi(idx)} onDragOver={e=>{e.preventDefault();setDoi(idx)}} onDrop={()=>hdrop(idx)} onDragEnd={()=>{setDi(null);setDoi(null)}} style={{position:'relative',borderRadius:10,overflow:'hidden',border:doi===idx?'2px solid var(--accent)':'2px solid transparent',opacity:di===idx?.4:1,cursor:'grab',background:'var(--bg)'}}>
+                <div style={{paddingTop:'75%',position:'relative',overflow:'hidden'}}><img src={p.url} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}} loading="lazy"/>
+                    <div style={{position:'absolute',top:6,left:6,width:22,height:22,borderRadius:'50%',background:'rgba(0,0,0,.6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'#fff'}}>{idx+1}</div>
+                    {cd===p.id?<div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.75)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,zIndex:3}}><div style={{fontSize:14,color:'#fff',fontWeight:600}}>Delete?</div><div style={{display:'flex',gap:8}}><button onClick={()=>hd(p.id)} className="tap" style={{padding:'8px 16px',borderRadius:6,border:'none',background:'var(--red)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>Delete</button><button onClick={()=>setCd(null)} className="tap" style={{padding:'8px 16px',borderRadius:6,border:'1px solid rgba(255,255,255,.3)',background:'transparent',color:'#fff',fontSize:12,cursor:'pointer'}}>Cancel</button></div></div>
+                    :<button onClick={()=>setCd(p.id)} className="tap" style={{position:'absolute',top:6,right:6,width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(200,40,40,.8)',color:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',zIndex:3}}>✕</button>}</div>
+                <div style={{padding:'6px 8px'}}>{ec?.id===p.id?<div style={{display:'flex',gap:4}}><input type="text" value={ec.caption} onChange={e=>setEc({...ec,caption:e.target.value})} onKeyDown={e=>e.key==='Enter'&&hcs()} placeholder="Caption…" autoFocus style={{flex:1,padding:'4px 6px',borderRadius:4,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:11,outline:'none',minWidth:0}}/><button onClick={hcs} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'var(--accent)',color:'#fff',fontSize:10,cursor:'pointer'}}>✓</button><button onClick={()=>setEc(null)} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'rgba(255,255,255,.06)',color:'var(--text-muted)',fontSize:10,cursor:'pointer'}}>✕</button></div>
+                    :<button onClick={()=>setEc({id:p.id,caption:p.caption||''})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'none',background:'rgba(255,255,255,.06)',color:'var(--text-muted)',fontSize:11,cursor:'pointer',textAlign:'left',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.caption||'Add caption…'}</button>}</div></div>)}</div>}
+        </div></div>)}
 
-        {/* Upload area */}
-        <div className="fu" style={CS}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-                <div>
-                    <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>{activePropInfo?.name}</div>
-                    <div style={{fontSize:12,color:'var(--text-muted)'}}>{photos.length} photo{photos.length!==1?'s':''} · Drag to reorder</div>
-                </div>
-                <label className="tap" style={{padding:'8px 16px',borderRadius:8,background:'linear-gradient(135deg,var(--accent),#4f46e5)',
-                    color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px var(--accent-glow)',
-                    opacity:uploading?.5:1,pointerEvents:uploading?'none':'auto'}}>
-                    {uploading?'Uploading…':'+ Upload Photos'}
-                    <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleUpload}
-                        style={{display:'none'}}/>
-                </label>
-            </div>
+// ── Expense Tracker ──
+function ExpenseTracker({year:parentYear}){
+    const[view,setView]=useState('summary');const[year,setYear]=useState(parentYear);
+    const[data,setData]=useState(null);const[ld,setLd]=useState(true);const[edit,setEdit]=useState(null);
+    const[fCat,setFCat]=useState('all');const[fProp,setFProp]=useState('all');
+    const[yoyData,setYoyData]=useState(null);const[yoyLoading,setYoyLoading]=useState(false);
+    const[yoyY1,setYoyY1]=useState(parentYear-1);const[yoyY2,setYoyY2]=useState(parentYear);
 
-            {loading?<div style={{textAlign:'center',padding:40,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading photos…</div>
-            :photos.length===0?<div style={{textAlign:'center',padding:40,border:'2px dashed var(--border-light)',borderRadius:12}}>
-                <div style={{fontSize:36,marginBottom:8}}>📷</div>
-                <div style={{fontSize:14,color:'var(--text-muted)'}}>No photos yet — upload some to get started</div>
-                <div style={{fontSize:12,color:'var(--text-faint)',marginTop:4}}>Photos appear on the public property page</div>
-            </div>
-            :<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:10}}>
-                {photos.map((photo,idx)=>(
-                    <div key={photo.id}
-                        draggable onDragStart={()=>handleDragStart(idx)} onDragOver={e=>handleDragOver(e,idx)}
-                        onDrop={()=>handleDrop(idx)} onDragEnd={handleDragEnd}
-                        style={{position:'relative',borderRadius:10,overflow:'hidden',
-                            border:dragOverIdx===idx?'2px solid var(--accent)':'2px solid transparent',
-                            opacity:dragIdx===idx?.4:1,transition:'opacity .2s, border .2s',
-                            cursor:'grab',background:'var(--bg)'}}>
-                        {/* Thumbnail */}
-                        <div style={{paddingTop:'75%',position:'relative',overflow:'hidden'}}>
-                            <img src={photo.url} alt={photo.caption||'Property photo'}
-                                style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
-                                loading="lazy"/>
-                            {/* Order badge */}
-                            <div style={{position:'absolute',top:6,left:6,width:22,height:22,borderRadius:'50%',
-                                background:'rgba(0,0,0,.6)',display:'flex',alignItems:'center',justifyContent:'center',
-                                fontSize:10,fontWeight:700,color:'#fff'}}>{idx+1}</div>
-                            {/* Delete button on image */}
-                            {confirmDel===photo.id?
-                                <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.75)',display:'flex',
-                                    flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,zIndex:3}}>
-                                    <div style={{fontSize:14,color:'#fff',fontWeight:600}}>Delete this photo?</div>
-                                    <div style={{display:'flex',gap:8}}>
-                                        <button onClick={()=>handleDelete(photo.id)} className="tap" style={{padding:'8px 20px',borderRadius:8,border:'none',
-                                            background:'var(--red)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>Delete</button>
-                                        <button onClick={()=>setConfirmDel(null)} className="tap" style={{padding:'8px 20px',borderRadius:8,
-                                            border:'1px solid rgba(255,255,255,.3)',background:'transparent',color:'#fff',fontSize:13,cursor:'pointer'}}>Cancel</button>
-                                    </div>
-                                </div>
-                            :<button onClick={()=>setConfirmDel(photo.id)} title="Delete photo" className="tap"
-                                style={{position:'absolute',top:6,right:6,width:28,height:28,borderRadius:'50%',border:'none',
-                                    background:'rgba(200,40,40,.8)',color:'#fff',fontSize:16,cursor:'pointer',
-                                    display:'flex',alignItems:'center',justifyContent:'center',zIndex:3,
-                                    backdropFilter:'blur(4px)',transition:'background .2s,transform .15s'}}
-                                onMouseEnter={e=>e.currentTarget.style.background='rgba(220,40,40,1)'}
-                                onMouseLeave={e=>e.currentTarget.style.background='rgba(200,40,40,.8)'}>✕</button>
-                            }
-                        </div>
-                        {/* Caption bar */}
-                        <div style={{padding:'6px 8px'}}>
-                            {editCaption?.id===photo.id?
-                                <div style={{display:'flex',gap:4,width:'100%'}}>
-                                    <input type="text" value={editCaption.caption} onChange={e=>setEditCaption({...editCaption,caption:e.target.value})}
-                                        onKeyDown={e=>e.key==='Enter'&&handleCaptionSave()}
-                                        placeholder="Caption…" autoFocus
-                                        style={{flex:1,padding:'4px 6px',borderRadius:4,border:'1px solid var(--border-light)',
-                                            background:'var(--bg-card)',color:'var(--text)',fontSize:11,outline:'none',minWidth:0}}/>
-                                    <button onClick={handleCaptionSave} style={{padding:'4px 8px',borderRadius:4,border:'none',
-                                        background:'var(--accent)',color:'#fff',fontSize:10,cursor:'pointer',flexShrink:0}}>✓</button>
-                                    <button onClick={()=>setEditCaption(null)} style={{padding:'4px 8px',borderRadius:4,border:'none',
-                                        background:'rgba(255,255,255,.06)',color:'var(--text-muted)',fontSize:10,cursor:'pointer',flexShrink:0}}>✕</button>
-                                </div>
-                            :<button onClick={()=>setEditCaption({id:photo.id,caption:photo.caption||''})}
-                                title="Edit caption"
-                                style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'none',background:'rgba(255,255,255,.06)',
-                                    color:'var(--text-muted)',fontSize:11,cursor:'pointer',textAlign:'left',overflow:'hidden',
-                                    textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                                {photo.caption||'Add caption…'}
-                            </button>}
-                        </div>
-                    </div>
-                ))}
-            </div>}
-        </div>
-
-        {/* Tips */}
-        <div style={{...CS,padding:16}}>
-            <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>
-                <strong style={{color:'var(--text-dim)'}}>Tips:</strong> The first photo becomes the main image on the public site.
-                Drag photos to reorder. Click a caption to edit it. Supported formats: JPG, PNG, WebP. Max 10MB per photo.
-            </div>
-        </div>
-    </div>);
-}
-
-// ── Expense Tracker (Phase 3) ──
-const EXP_CATS=[
-    {id:'repairs',label:'Repairs & Maintenance',icon:'🔧'},
-    {id:'capital',label:'Capital Improvements',icon:'🏗️'},
-    {id:'supplies',label:'Supplies & Materials',icon:'🛒'},
-    {id:'utilities',label:'Utilities',icon:'💡'},
-    {id:'insurance',label:'Insurance',icon:'🛡️'},
-    {id:'taxes',label:'Property Taxes',icon:'🏛️'},
-    {id:'management',label:'Management Fees',icon:'📋'},
-    {id:'cleaning',label:'Cleaning & Turnover',icon:'🧹'},
-    {id:'travel',label:'Travel',icon:'🚗'},
-    {id:'furnishing',label:'Furnishing & Decor',icon:'🛋️'},
-    {id:'landscaping',label:'Landscaping',icon:'🌿'},
-    {id:'legal',label:'Legal & Professional',icon:'⚖️'},
-    {id:'marketing',label:'Marketing & Advertising',icon:'📣'},
-    {id:'mortgage',label:'Mortgage Interest',icon:'🏦'},
-    {id:'other',label:'Other',icon:'📝'},
-];
-
-function ExpenseTracker({year}){
-    const[view,setView]=useState('summary'); // summary | add | history
-    const[data,setData]=useState(null);
-    const[loading,setLoading]=useState(true);
-    const[edit,setEdit]=useState(null);
-    const[fCat,setFCat]=useState('all');
-    const[fProp,setFProp]=useState('all');
-
-    const fetch_=useCallback(async()=>{
-        setLoading(true);
-        const r=await api(`expenses?year=${year}`);
-        if(r)setData(r);
-        setLoading(false);
-    },[year]);
+    const fetch_=useCallback(async()=>{setLd(true);const r=await api(`expenses?year=${year}`);if(r)setData(r);setLd(false)},[year]);
     useEffect(()=>{fetch_()},[fetch_]);
 
-    const expenses=data?.expenses||[];
-    const sm=data?.summary||{total_amount:0,total_count:0};
-    const cats=data?.categories||[];
-    const props=data?.properties||[];
+    const fetchYoy=useCallback(async()=>{setYoyLoading(true);const r=await api(`expenses/yoy?year1=${yoyY1}&year2=${yoyY2}`);if(r)setYoyData(r);setYoyLoading(false)},[yoyY1,yoyY2]);
+    useEffect(()=>{if(view==='yoy')fetchYoy()},[view,fetchYoy]);
+
+    const expenses=data?.expenses||[];const sm=data?.summary||{total_amount:0,total_count:0};const cats=data?.categories||[];const props=data?.properties||[];
     const filtered=expenses.filter(e=>fCat==='all'||e.category===fCat).filter(e=>fProp==='all'||e.property===fProp);
     const filtTotal=filtered.reduce((s,e)=>s+e.amount,0);
 
-    const handleSave=async(expense)=>{
-        if(expense.id){await api('expenses',{method:'PUT',body:JSON.stringify(expense)})}
-        else{await api('expenses',{method:'POST',body:JSON.stringify(expense)})}
-        setEdit(null);setView('summary');fetch_();
-    };
-    const handleDel=async(id)=>{await api(`expenses/${id}`,{method:'DELETE'});fetch_()};
-    const handleExport=()=>{const t=getToken();fetch(`${API}/expenses/export?year=${year}`,{headers:{Authorization:`Bearer ${t}`}})
-        .then(r=>r.blob()).then(b=>{const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`Expenses_${year}.csv`;a.click();URL.revokeObjectURL(u)})};
+    const handleSave=async exp=>{if(exp.id){await api('expenses',{method:'PUT',body:JSON.stringify(exp)})}else{await api('expenses',{method:'POST',body:JSON.stringify(exp)})}setEdit(null);setView('summary');fetch_()};
+    const handleDel=async id=>{await api(`expenses/${id}`,{method:'DELETE'});fetch_()};
+    const handleExport=()=>{const t=getToken();fetch(`${API}/expenses/export?year=${year}`,{headers:{Authorization:`Bearer ${t}`}}).then(r=>r.blob()).then(b=>{const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`Expenses_${year}.csv`;a.click();URL.revokeObjectURL(u)})};
 
     const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
+    const navItems=[{id:'summary',label:'Summary',icon:'📊'},{id:'add',label:'Add',icon:'➕'},{id:'import',label:'Import',icon:'📤'},{id:'history',label:'History',icon:'📜'},{id:'yoy',label:'YoY',icon:'📈'}];
 
     return(<div style={{display:'flex',flexDirection:'column',gap:12}}>
-        {/* Sub-nav */}
-        <div style={{display:'flex',gap:6}}>
-            {[{id:'summary',label:'Summary',icon:'📊'},{id:'add',label:'Add Expense',icon:'➕'},{id:'history',label:'History',icon:'📜'}].map(n=>
-                <button key={n.id} onClick={()=>{setView(n.id);if(n.id!=='add')setEdit(null)}} className="tap"
-                    style={{flex:1,padding:'10px 8px',borderRadius:10,border:`1px solid ${view===n.id?'var(--accent)':'var(--border)'}`,
-                        background:view===n.id?'rgba(99,102,241,.1)':'var(--bg-card)',color:view===n.id?'var(--accent-soft)':'var(--text-dim)',
-                        fontSize:12,fontWeight:view===n.id?600:400,cursor:'pointer',fontFamily:'var(--font)',display:'flex',
-                        alignItems:'center',justifyContent:'center',gap:5,transition:'all .2s'}}>
-                    <span>{n.icon}</span>{n.label}</button>)}
+        {/* Year selector */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:4}}>
+            <button onClick={()=>setYear(y=>y-1)} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>‹</button>
+            <span style={{fontFamily:'var(--mono)',fontSize:16,fontWeight:700,minWidth:50,textAlign:'center',color:'var(--text)'}}>{year}</span>
+            <button onClick={()=>setYear(y=>y+1)} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>›</button>
         </div>
+        {/* Sub-nav */}
+        <div style={{display:'flex',gap:4}}>{navItems.map(n=><button key={n.id} onClick={()=>{setView(n.id);if(n.id!=='add')setEdit(null)}} className="tap"
+            style={{flex:1,padding:'8px 4px',borderRadius:8,border:`1px solid ${view===n.id?'var(--accent)':'var(--border)'}`,background:view===n.id?'rgba(99,102,241,.1)':'var(--bg-card)',color:view===n.id?'var(--accent-soft)':'var(--text-dim)',fontSize:11,fontWeight:view===n.id?600:400,cursor:'pointer',fontFamily:'var(--font)',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+            <span>{n.icon}</span>{n.label}</button>)}</div>
 
-        {loading&&!data?<div style={{textAlign:'center',padding:60,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading…</div>:<>
+        {ld&&!data?<div style={{textAlign:'center',padding:60,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading…</div>:<>
 
-        {/* Summary */}
         {view==='summary'&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
-            <div className="fu" style={CS}>
-                <div style={{textAlign:'center',marginBottom:16}}>
-                    <div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:4}}>{year} Total Expenses</div>
-                    <div style={{fontFamily:'var(--mono)',fontSize:36,fontWeight:700,color:'var(--text)'}}>${sm.total_amount.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
-                    <div style={{fontSize:12,color:'var(--text-muted)',marginTop:4}}>{sm.total_count} expense{sm.total_count!==1?'s':''}</div>
-                </div>
-                {cats.length>0&&<div>
-                    <div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:10}}>By Category</div>
-                    {cats.map(c=>{const ct=EXP_CATS.find(x=>x.id===c.category);return(
-                        <div key={c.category} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-                            <span style={{fontSize:16,flexShrink:0}}>{ct?.icon||'📝'}</span>
-                            <div style={{flex:1}}>
-                                <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}>
-                                    <span style={{color:'var(--text-dim)'}}>{ct?.label||c.category}</span>
-                                    <span style={{fontFamily:'var(--mono)',color:'var(--accent-soft)',fontWeight:600,fontSize:12}}>
-                                        ${c.total.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-                                <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,.04)'}}>
-                                    <div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',
-                                        width:`${(c.total/sm.total_amount)*100}%`,transition:'width .5s ease'}}/></div>
-                            </div></div>)})}
-                </div>}
-                {props.length>0&&<div style={{marginTop:16}}>
-                    <div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:10}}>By Property</div>
-                    {props.map(p=>{const pr=PROPS.find(x=>x.id===p.property);return(
-                        <div key={p.property} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--border)'}}>
-                            <span style={{fontSize:13,color:'var(--text-dim)'}}>{pr?.label||p.property}</span>
-                            <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600,color:'var(--accent-soft)'}}>
-                                ${p.total.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>)})}
-                </div>}
-            </div>
-            <button onClick={handleExport} className="tap fu" style={{width:'100%',padding:13,borderRadius:12,border:'1px solid var(--border-light)',
-                background:'var(--bg-card)',color:'var(--text-dim)',fontSize:14,cursor:'pointer',fontWeight:500,fontFamily:'var(--font)'}}>
-                📥 Export {year} Expenses CSV</button>
+            <div className="fu" style={CS}><div style={{textAlign:'center',marginBottom:16}}>
+                <div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:4}}>{year} Total Expenses</div>
+                <div style={{fontFamily:'var(--mono)',fontSize:36,fontWeight:700,color:'var(--text)'}}>${fmtD(sm.total_amount)}</div>
+                <div style={{fontSize:12,color:'var(--text-muted)',marginTop:4}}>{sm.total_count} expense{sm.total_count!==1?'s':''}</div></div>
+                {cats.length>0&&<div><div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:10}}>By Category</div>
+                    {cats.map(c=>{const ct=EXP_CATS.find(x=>x.id===c.category);return(<div key={c.category} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}><span style={{fontSize:16,flexShrink:0}}>{ct?.icon||'📝'}</span><div style={{flex:1}}><div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}><span style={{color:'var(--text-dim)'}}>{ct?.label||c.category}</span><span style={{fontFamily:'var(--mono)',color:'var(--accent-soft)',fontWeight:600,fontSize:12}}>${fmtD(c.total)}</span></div><div style={{height:4,borderRadius:2,background:'rgba(255,255,255,.04)'}}><div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',width:`${(c.total/sm.total_amount)*100}%`}}/></div></div></div>)})}</div>}
+                {props.length>0&&<div style={{marginTop:16}}><div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:10}}>By Property</div>
+                    {props.map(p=>{const pr=PROPS.find(x=>x.id===p.property);return(<div key={p.property} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--border)'}}><span style={{fontSize:13,color:'var(--text-dim)'}}>{pr?.label||p.property}</span><span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600,color:'var(--accent-soft)'}}>${fmtD(p.total)}</span></div>)})}</div>}</div>
+            <button onClick={handleExport} className="tap fu" style={{width:'100%',padding:13,borderRadius:12,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text-dim)',fontSize:14,cursor:'pointer',fontWeight:500,fontFamily:'var(--font)'}}>📥 Export {year} Expenses CSV</button>
         </div>}
 
-        {/* Add / Edit */}
         {view==='add'&&<ExpenseForm onSave={handleSave} edit={edit} onCancel={()=>{setEdit(null);setView('summary')}}/>}
 
-        {/* History */}
+        {view==='import'&&<CSVUpload type="expenses" onUpload={fetch_} templateCols="Date, Amount, Category, Property, Vendor, Description"/>}
+
         {view==='history'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
             <div style={{display:'flex',gap:8}}>
-                <select value={fCat} onChange={e=>setFCat(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',
-                    background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>
-                    <option value="all">All Categories</option>
-                    {EXP_CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}</select>
-                <select value={fProp} onChange={e=>setFProp(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',
-                    background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>
-                    {PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select>
+                <select value={fCat} onChange={e=>setFCat(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}><option value="all">All Categories</option>{EXP_CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}</select>
+                <select value={fProp} onChange={e=>setFProp(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>{PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+            <div style={{fontSize:12,color:'var(--text-faint)',padding:'0 2px'}}>{filtered.length} expenses · ${fmtD(filtTotal)} total</div>
+            {filtered.length===0?<div className="fu" style={{textAlign:'center',padding:50,color:'var(--text-faint)'}}>No expenses for {year}</div>
+            :filtered.map(e=><ExpenseRow key={e.id} e={e} onEdit={en=>{setEdit(en);setView('add')}} onDel={handleDel}/>)}</div>}
+
+        {view==='yoy'&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div style={CS}>
+                <div style={{fontSize:14,fontWeight:600,marginBottom:12}}>Year-over-Year Comparison</div>
+                <div style={{display:'flex',gap:10,marginBottom:16}}>
+                    <div style={{flex:1}}><label style={{fontSize:11,color:'var(--text-muted)',display:'block',marginBottom:4}}>YEAR 1</label>
+                        <input type="number" value={yoyY1} onChange={e=>setYoyY1(parseInt(e.target.value))} style={{width:'100%',padding:'8px 10px',borderRadius:8,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:14,outline:'none',textAlign:'center',fontFamily:'var(--mono)'}}/></div>
+                    <div style={{display:'flex',alignItems:'flex-end',paddingBottom:8,color:'var(--text-muted)',fontSize:16}}>vs</div>
+                    <div style={{flex:1}}><label style={{fontSize:11,color:'var(--text-muted)',display:'block',marginBottom:4}}>YEAR 2</label>
+                        <input type="number" value={yoyY2} onChange={e=>setYoyY2(parseInt(e.target.value))} style={{width:'100%',padding:'8px 10px',borderRadius:8,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:14,outline:'none',textAlign:'center',fontFamily:'var(--mono)'}}/></div>
+                </div>
+                {yoyLoading?<div style={{textAlign:'center',padding:30,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading…</div>
+                :yoyData?<div>
+                    {/* Totals */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',gap:12,marginBottom:20,textAlign:'center'}}>
+                        <div><div style={{fontSize:11,color:'var(--text-muted)',marginBottom:4}}>{yoyData.year1.year}</div><div style={{fontFamily:'var(--mono)',fontSize:22,fontWeight:700}}>${fmtD(yoyData.year1.total)}</div><div style={{fontSize:11,color:'var(--text-muted)'}}>{yoyData.year1.count} entries</div></div>
+                        <div style={{display:'flex',alignItems:'center'}}><div style={{padding:'6px 12px',borderRadius:8,background:yoyData.comparison.totalDiff>0?'rgba(248,113,113,.1)':'rgba(52,211,153,.1)',
+                            color:yoyData.comparison.totalDiff>0?'var(--red)':'var(--green)',fontSize:13,fontWeight:700,fontFamily:'var(--mono)'}}>
+                            {yoyData.comparison.totalDiff>0?'▲':'▼'} {yoyData.comparison.totalPctChange!==null?`${Math.abs(yoyData.comparison.totalPctChange).toFixed(1)}%`:'N/A'}</div></div>
+                        <div><div style={{fontSize:11,color:'var(--text-muted)',marginBottom:4}}>{yoyData.year2.year}</div><div style={{fontFamily:'var(--mono)',fontSize:22,fontWeight:700}}>${fmtD(yoyData.year2.total)}</div><div style={{fontSize:11,color:'var(--text-muted)'}}>{yoyData.year2.count} entries</div></div>
+                    </div>
+                    {/* Monthly bars */}
+                    <div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:8}}>Monthly Comparison</div>
+                    <div style={{display:'flex',alignItems:'flex-end',gap:3,height:100,marginBottom:16}}>
+                        {Array.from({length:12},(_,i)=>{const v1=yoyData.year1.monthly[i]||0;const v2=yoyData.year2.monthly[i]||0;const mx=Math.max(...yoyData.year1.monthly,...yoyData.year2.monthly,1);
+                            return(<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                                <div style={{display:'flex',gap:1,alignItems:'flex-end',width:'100%'}}>
+                                    <div style={{flex:1,height:Math.max(2,(v1/mx)*70),borderRadius:2,background:'rgba(99,102,241,.4)'}} title={`${MN[i]} ${yoyData.year1.year}: $${fmtD(v1)}`}/>
+                                    <div style={{flex:1,height:Math.max(2,(v2/mx)*70),borderRadius:2,background:'var(--accent-light)'}} title={`${MN[i]} ${yoyData.year2.year}: $${fmtD(v2)}`}/></div>
+                                <span style={{fontSize:8,color:'var(--text-faint)'}}>{MN[i].charAt(0)}</span></div>)})}</div>
+                    <div style={{display:'flex',gap:12,justifyContent:'center',fontSize:11,color:'var(--text-muted)',marginBottom:16}}>
+                        <span><span style={{display:'inline-block',width:10,height:10,borderRadius:2,background:'rgba(99,102,241,.4)',marginRight:4,verticalAlign:'middle'}}/>{yoyData.year1.year}</span>
+                        <span><span style={{display:'inline-block',width:10,height:10,borderRadius:2,background:'var(--accent-light)',marginRight:4,verticalAlign:'middle'}}/>{yoyData.year2.year}</span></div>
+                    {/* Category comparison table */}
+                    <div style={{fontSize:11,color:'var(--text-muted)',letterSpacing:1,textTransform:'uppercase',marginBottom:8}}>By Category</div>
+                    {yoyData.comparison.categories.filter(c=>c.year1>0||c.year2>0).map(c=>{const ct=EXP_CATS.find(x=>x.id===c.category);const pct=c.year1>0?((c.diff/c.year1)*100):null;
+                        return(<div key={c.category} style={{display:'grid',gridTemplateColumns:'1fr auto auto auto',gap:8,alignItems:'center',padding:'6px 0',borderBottom:'1px solid var(--border)',fontSize:12}}>
+                            <span style={{color:'var(--text-dim)'}}>{ct?.icon} {ct?.label||c.category}</span>
+                            <span style={{fontFamily:'var(--mono)',color:'var(--text-muted)',textAlign:'right'}}>${fmtD(c.year1)}</span>
+                            <span style={{fontFamily:'var(--mono)',color:'var(--text)',textAlign:'right',fontWeight:600}}>${fmtD(c.year2)}</span>
+                            <span style={{fontFamily:'var(--mono)',fontSize:11,textAlign:'right',color:c.diff>0?'var(--red)':c.diff<0?'var(--green)':'var(--text-muted)',fontWeight:600}}>
+                                {c.diff>0?'+':''}{pct!==null?`${pct.toFixed(0)}%`:c.year2>0?'NEW':'—'}</span></div>)})}
+                </div>:<div style={{textAlign:'center',padding:30,color:'var(--text-faint)'}}>Select years above</div>}
             </div>
-            <div style={{fontSize:12,color:'var(--text-faint)',padding:'0 2px'}}>
-                {filtered.length} expenses · ${filtTotal.toLocaleString('en-US',{minimumFractionDigits:2})} total</div>
-            {filtered.length===0?<div className="fu" style={{textAlign:'center',padding:50,color:'var(--text-faint)'}}>No expenses yet</div>
-            :filtered.map(e=><ExpenseRow key={e.id} e={e} onEdit={en=>{setEdit(en);setView('add')}} onDel={handleDel}/>)}
         </div>}
         </>}
-    </div>);
-}
+    </div>)}
 
-function ExpenseForm({onSave,edit,onCancel}){
-    const[dt,setDt]=useState(edit?.expense_date||today());
-    const[amt,setAmt]=useState(edit?String(edit.amount):'');
-    const[cat,setCat]=useState(edit?.category||'');
-    const[prop,setProp]=useState(edit?.property||'all');
-    const[vendor,setVendor]=useState(edit?.vendor||'');
-    const[desc,setDesc]=useState(edit?.description||'');
-    const[receiptFile,setReceiptFile]=useState(edit?.receipt_filename||null);
-    const[uploading,setUploading]=useState(false);
-    const[parsing,setParsing]=useState(false);
-    const[sv,setSv]=useState(false);
-    const fileRef=useRef(null);
+function ExpenseForm({onSave,edit,onCancel}){const[dt,setDt]=useState(edit?.expense_date||today());const[amt,setAmt]=useState(edit?String(edit.amount):'');const[cat,setCat]=useState(edit?.category||'');const[prop,setProp]=useState(edit?.property||'all');const[vendor,setVendor]=useState(edit?.vendor||'');const[desc,setDesc]=useState(edit?.description||'');const[rf,setRf]=useState(edit?.receipt_filename||null);const[ul,setUl]=useState(false);const[pa,setPa]=useState(false);const[sv,setSv]=useState(false);const fr=useRef(null);
+    useEffect(()=>{if(edit){setDt(edit.expense_date);setAmt(String(edit.amount));setCat(edit.category);setProp(edit.property);setVendor(edit.vendor||'');setDesc(edit.description||'');setRf(edit.receipt_filename||null)}else{reset()}},[edit]);
+    const reset=()=>{setDt(today());setAmt('');setCat('');setVendor('');setDesc('');setRf(null)};
+    const hru=async e=>{const file=e.target.files?.[0];if(!file)return;setUl(true);const t=getToken();const fd=new FormData();fd.append('receipt',file);
+        try{const r=await fetch(`${API}/expenses/upload-receipt`,{method:'POST',headers:{Authorization:`Bearer ${t}`},body:fd});
+            if(r.ok){const d=await r.json();setRf(d.filename);setPa(true);
+                try{const ocrRes=await fetch(`${API}/expenses/ocr`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({filename:d.filename})});
+                    if(ocrRes.ok){const od=await ocrRes.json();if(od.parsed){const p=od.parsed;if(p.date)setDt(p.date);if(p.amount)setAmt(String(p.amount));if(p.vendor)setVendor(p.vendor);if(p.description)setDesc(p.description);if(p.category&&EXP_CATS.find(c=>c.id===p.category))setCat(p.category)}}
+                    else{console.error('OCR error:',await ocrRes.text())}}catch(oe){console.error('OCR error:',oe)}setPa(false)}
+        }catch(err){console.error(err)}setUl(false);if(fr.current)fr.current.value=''};
+    const go=async()=>{if(!dt||!amt||!cat)return;setSv(true);const p={expense_date:dt,amount:parseFloat(amt),category:cat,property:prop,vendor,description:desc,receipt_filename:rf};if(edit)p.id=edit.id;await onSave(p);setSv(false);if(!edit)reset()};
+    const IS={width:'100%',padding:'12px 14px',borderRadius:10,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:15,outline:'none',boxSizing:'border-box'};const LS={fontSize:11,color:'var(--text-muted)',marginBottom:5,display:'block',letterSpacing:.8,textTransform:'uppercase'};const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
+    return(<div className="fu" style={CS}><div style={{fontSize:16,fontWeight:600,marginBottom:18}}>{edit?'Edit Expense':'Add Expense'}</div>
+        <div style={{marginBottom:16,padding:16,borderRadius:12,border:'2px dashed var(--border-light)',textAlign:'center',background:rf?'rgba(99,102,241,.05)':'transparent'}}>
+            {rf?<div><div style={{fontSize:13,color:'var(--accent-soft)',fontWeight:600,marginBottom:4}}>✓ Receipt attached</div><img src={`/uploads/${rf}`} style={{maxWidth:'100%',maxHeight:120,borderRadius:8,marginBottom:8,objectFit:'contain'}}/><div><button onClick={()=>setRf(null)} style={{fontSize:11,color:'var(--text-muted)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Remove</button></div></div>
+            :<label className="tap" style={{cursor:'pointer',display:'block'}}><div style={{fontSize:28,marginBottom:6}}>{ul?'⏳':pa?'🔍':'📸'}</div><div style={{fontSize:13,color:'var(--text-dim)',fontWeight:600}}>{ul?'Uploading…':pa?'Reading receipt with AI…':'Upload a Receipt'}</div><div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>Photo will be auto-read to fill in fields</div><input ref={fr} type="file" accept="image/*" onChange={hru} style={{display:'none'}} disabled={ul||pa}/></label>}</div>
+        {pa&&<div style={{marginBottom:16,padding:12,borderRadius:10,background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.15)',textAlign:'center',fontSize:13,color:'var(--accent-soft)',animation:'pulse 1.5s infinite'}}>🔍 AI is reading your receipt…</div>}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}><div><label style={LS}>Date</label><input type="date" value={dt} onChange={e=>setDt(e.target.value)} style={IS}/></div><div><label style={LS}>Amount ($)</label><input type="number" inputMode="decimal" step="0.01" min="0" placeholder="0.00" value={amt} onChange={e=>setAmt(e.target.value)} style={IS}/></div></div>
+        <div style={{marginBottom:16}}><label style={LS}>Vendor / Payee</label><input type="text" placeholder="e.g., Home Depot" value={vendor} onChange={e=>setVendor(e.target.value)} style={IS}/></div>
+        <div style={{marginBottom:16}}><label style={LS}>Category</label><div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:6}}>{EXP_CATS.map(c=><button key={c.id} onClick={()=>setCat(c.id)} className="tap" style={{padding:'9px 10px',borderRadius:9,border:`1px solid ${cat===c.id?'var(--accent)':'var(--border)'}`,background:cat===c.id?'rgba(99,102,241,.12)':'var(--bg-card)',color:cat===c.id?'var(--accent-soft)':'var(--text-dim)',fontSize:12,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font)'}}><span style={{fontSize:14}}>{c.icon}</span><span style={{lineHeight:1.2}}>{c.label}</span></button>)}</div></div>
+        <div style={{marginBottom:16}}><label style={LS}>Property</label><select value={prop} onChange={e=>setProp(e.target.value)} style={{...IS,appearance:'auto'}}>{PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+        <div style={{marginBottom:16}}><label style={LS}>Description</label><textarea rows={2} placeholder="What was this expense for?" value={desc} onChange={e=>setDesc(e.target.value)} style={{...IS,resize:'vertical',lineHeight:1.5}}/></div>
+        <div style={{display:'flex',gap:10}}><button onClick={go} disabled={sv} className="tap" style={{flex:1,padding:'14px 20px',borderRadius:12,border:'none',background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:'0 4px 24px var(--accent-glow)',opacity:sv?.6:1,fontFamily:'var(--font)'}}>{sv?'Saving…':edit?'Update':'✓ Save Expense'}</button>
+            {edit&&<button onClick={onCancel} className="tap" style={{padding:'14px 20px',borderRadius:12,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:15,cursor:'pointer'}}>Cancel</button>}</div></div>)}
 
-    useEffect(()=>{if(edit){setDt(edit.expense_date);setAmt(String(edit.amount));setCat(edit.category);
-        setProp(edit.property);setVendor(edit.vendor||'');setDesc(edit.description||'');setReceiptFile(edit.receipt_filename||null)}
-        else{reset()}},[edit]);
-    const reset=()=>{setDt(today());setAmt('');setCat('');setVendor('');setDesc('');setReceiptFile(null)};
+function ExpenseRow({e,onEdit,onDel}){const[cf,setCf]=useState(false);const ct=EXP_CATS.find(c=>c.id===e.category);const pr=PROPS.find(p=>p.id===e.property);
+    if(cf)return(<div style={{padding:14,borderRadius:11,background:'rgba(248,113,113,.06)',border:'1px solid rgba(248,113,113,.15)',textAlign:'center',marginBottom:8}}><p style={{fontSize:13,color:'var(--text-dim)',margin:'0 0 10px'}}>Delete this expense?</p><div style={{display:'flex',gap:8,justifyContent:'center'}}><button onClick={()=>{onDel(e.id);setCf(false)}} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'none',background:'var(--red)',color:'#fff',fontSize:13,cursor:'pointer'}}>Delete</button><button onClick={()=>setCf(false)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:13,cursor:'pointer'}}>Cancel</button></div></div>);
+    return(<div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:11,background:'var(--bg-card)',border:'1px solid var(--border)',marginBottom:8}}><span style={{fontSize:22,flexShrink:0}}>{ct?.icon||'📝'}</span><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}><span style={{fontSize:14,fontWeight:600,color:'#e8e8e8'}}>{e.vendor||ct?.label||e.category}</span><span style={{fontFamily:'var(--mono)',fontSize:14,fontWeight:700,color:'var(--green)',flexShrink:0}}>${fmtD(parseFloat(e.amount))}</span></div><div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>{fmtDate(e.expense_date)} · {ct?.label||e.category}{e.property!=='all'&&<span> · {pr?.label}</span>}{e.receipt_filename&&<span> · 📎</span>}</div>{e.description&&<div style={{fontSize:12,color:'var(--text-faint)',marginTop:4,lineHeight:1.4}}>{e.description}</div>}</div>
+        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}><button onClick={()=>onEdit(e)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'var(--text-muted)',cursor:'pointer',fontSize:12}}>✎</button><button onClick={()=>setCf(true)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'rgba(248,113,113,.5)',cursor:'pointer',fontSize:12}}>✕</button></div></div>)}
 
-    const handleReceiptUpload=async(e)=>{
-        const file=e.target.files?.[0];if(!file)return;
-        setUploading(true);
-        const t=getToken();
-        const fd=new FormData();fd.append('receipt',file);
-        try{
-            const r=await fetch(`${API}/expenses/upload-receipt`,{method:'POST',headers:{Authorization:`Bearer ${t}`},body:fd});
-            if(r.ok){
-                const d=await r.json();
-                setReceiptFile(d.filename);
-                // OCR via server-side proxy
-                setParsing(true);
-                try{
-                    const t2=getToken();
-                    const ocrRes=await fetch(`${API}/expenses/ocr`,{
-                        method:'POST',
-                        headers:{'Content-Type':'application/json',Authorization:`Bearer ${t2}`},
-                        body:JSON.stringify({filename:d.filename})
-                    });
-                    if(ocrRes.ok){
-                        const ocrData=await ocrRes.json();
-                        if(ocrData.parsed){
-                            const p=ocrData.parsed;
-                            if(p.date)setDt(p.date);
-                            if(p.amount)setAmt(String(p.amount));
-                            if(p.vendor)setVendor(p.vendor);
-                            if(p.description)setDesc(p.description);
-                            if(p.category&&EXP_CATS.find(c=>c.id===p.category))setCat(p.category);
-                        }
-                    }else{const err=await ocrRes.text();console.error('OCR error:',err)}
-                }catch(ocrErr){console.error('OCR error:',ocrErr)}
-                setParsing(false);
-            }else{const err=await r.text();console.error('Receipt upload error:',err)}
-        }catch(err){console.error('Upload failed:',err)}
-        setUploading(false);
-        if(fileRef.current)fileRef.current.value='';
-    };
-
-    const go=async()=>{if(!dt||!amt||!cat)return;setSv(true);
-        const payload={expense_date:dt,amount:parseFloat(amt),category:cat,property:prop,vendor,description:desc,receipt_filename:receiptFile};
-        if(edit)payload.id=edit.id;
-        await onSave(payload);setSv(false);if(!edit)reset()};
-
-    const IS={width:'100%',padding:'12px 14px',borderRadius:10,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:15,outline:'none',boxSizing:'border-box'};
-    const LS={fontSize:11,color:'var(--text-muted)',marginBottom:5,display:'block',letterSpacing:.8,textTransform:'uppercase'};
-    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
-
-    return(<div className="fu" style={CS}>
-        <div style={{fontSize:16,fontWeight:600,marginBottom:18}}>{edit?'Edit Expense':'Add Expense'}</div>
-
-        {/* Receipt Upload */}
-        <div style={{marginBottom:16,padding:16,borderRadius:12,border:'2px dashed var(--border-light)',textAlign:'center',
-            background:receiptFile?'rgba(99,102,241,.05)':'transparent',transition:'background .3s'}}>
-            {receiptFile?<div>
-                <div style={{fontSize:13,color:'var(--accent-soft)',fontWeight:600,marginBottom:4}}>✓ Receipt attached</div>
-                <img src={`/uploads/${receiptFile}`} style={{maxWidth:'100%',maxHeight:120,borderRadius:8,marginBottom:8,objectFit:'contain'}} alt="Receipt"/>
-                <div><button onClick={()=>setReceiptFile(null)} style={{fontSize:11,color:'var(--text-muted)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Remove</button></div>
-            </div>
-            :<label className="tap" style={{cursor:'pointer',display:'block'}}>
-                <div style={{fontSize:28,marginBottom:6}}>{uploading?'⏳':parsing?'🔍':'📸'}</div>
-                <div style={{fontSize:13,color:'var(--text-dim)',fontWeight:600}}>
-                    {uploading?'Uploading…':parsing?'Reading receipt with AI…':'Upload a Receipt'}</div>
-                <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>
-                    Photo will be auto-read to fill in fields below</div>
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleReceiptUpload}
-                    style={{display:'none'}} disabled={uploading||parsing}/>
-            </label>}
-        </div>
-
-        {parsing&&<div style={{marginBottom:16,padding:12,borderRadius:10,background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.15)',
-            textAlign:'center',fontSize:13,color:'var(--accent-soft)',animation:'pulse 1.5s infinite'}}>
-            🔍 AI is reading your receipt…</div>}
-
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
-            <div><label style={LS}>Date</label><input type="date" value={dt} onChange={e=>setDt(e.target.value)} style={IS}/></div>
-            <div><label style={LS}>Amount ($)</label><input type="number" inputMode="decimal" step="0.01" min="0" placeholder="0.00"
-                value={amt} onChange={e=>setAmt(e.target.value)} style={IS}/></div>
-        </div>
-
-        <div style={{marginBottom:16}}><label style={LS}>Vendor / Payee</label>
-            <input type="text" placeholder="e.g., Home Depot, Twiddy, etc." value={vendor} onChange={e=>setVendor(e.target.value)} style={IS}/></div>
-
-        <div style={{marginBottom:16}}><label style={LS}>Category</label>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:6}}>
-                {EXP_CATS.map(c=><button key={c.id} onClick={()=>setCat(c.id)} className="tap" style={{padding:'9px 10px',borderRadius:9,
-                    border:`1px solid ${cat===c.id?'var(--accent)':'var(--border)'}`,background:cat===c.id?'rgba(99,102,241,.12)':'var(--bg-card)',
-                    color:cat===c.id?'var(--accent-soft)':'var(--text-dim)',fontSize:12,cursor:'pointer',textAlign:'left',display:'flex',
-                    alignItems:'center',gap:6,transition:'all .15s',fontFamily:'var(--font)'}}>
-                    <span style={{fontSize:14}}>{c.icon}</span><span style={{lineHeight:1.2}}>{c.label}</span></button>)}</div></div>
-
-        <div style={{marginBottom:16}}><label style={LS}>Property</label>
-            <select value={prop} onChange={e=>setProp(e.target.value)} style={{...IS,appearance:'auto'}}>
-                {PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
-
-        <div style={{marginBottom:16}}><label style={LS}>Description / Notes</label>
-            <textarea rows={2} placeholder="What was this expense for?" value={desc} onChange={e=>setDesc(e.target.value)}
-                style={{...IS,resize:'vertical',lineHeight:1.5}}/></div>
-
-        <div style={{display:'flex',gap:10}}>
-            <button onClick={go} disabled={sv} className="tap" style={{flex:1,padding:'14px 20px',borderRadius:12,border:'none',
-                background:'linear-gradient(135deg,var(--accent),#4f46e5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',
-                boxShadow:'0 4px 24px var(--accent-glow)',opacity:sv?.6:1,fontFamily:'var(--font)'}}>
-                {sv?'Saving…':edit?'Update Expense':'✓ Save Expense'}</button>
-            {edit&&<button onClick={onCancel} className="tap" style={{padding:'14px 20px',borderRadius:12,border:'1px solid var(--border-light)',
-                background:'transparent',color:'var(--text-dim)',fontSize:15,cursor:'pointer',fontFamily:'var(--font)'}}>Cancel</button>}
-        </div>
-    </div>);
-}
-
-function ExpenseRow({e,onEdit,onDel}){
-    const[cf,setCf]=useState(false);
-    const ct=EXP_CATS.find(c=>c.id===e.category);
-    const pr=PROPS.find(p=>p.id===e.property);
-    if(cf)return(<div style={{padding:14,borderRadius:11,background:'rgba(248,113,113,.06)',border:'1px solid rgba(248,113,113,.15)',textAlign:'center',marginBottom:8}}>
-        <p style={{fontSize:13,color:'var(--text-dim)',margin:'0 0 10px'}}>Delete this expense?</p>
-        <div style={{display:'flex',gap:8,justifyContent:'center'}}>
-            <button onClick={()=>{onDel(e.id);setCf(false)}} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'none',background:'var(--red)',color:'#fff',fontSize:13,cursor:'pointer'}}>Delete</button>
-            <button onClick={()=>setCf(false)} className="tap" style={{padding:'8px 18px',borderRadius:8,border:'1px solid var(--border-light)',background:'transparent',color:'var(--text-dim)',fontSize:13,cursor:'pointer'}}>Cancel</button></div></div>);
-    return(<div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:11,background:'var(--bg-card)',border:'1px solid var(--border)',marginBottom:8}}>
-        <span style={{fontSize:22,flexShrink:0}}>{ct?.icon||'📝'}</span>
-        <div style={{flex:1,minWidth:0}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
-                <span style={{fontSize:14,fontWeight:600,color:'#e8e8e8'}}>{e.vendor||ct?.label||e.category}</span>
-                <span style={{fontFamily:'var(--mono)',fontSize:14,fontWeight:700,color:'var(--green)',flexShrink:0}}>
-                    ${parseFloat(e.amount).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-            <div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>
-                {fmtDate(e.expense_date)} · {ct?.label||e.category}
-                {e.property!=='all'&&<span> · {pr?.label}</span>}
-                {e.receipt_filename&&<span> · 📎</span>}</div>
-            {e.description&&<div style={{fontSize:12,color:'var(--text-faint)',marginTop:4,lineHeight:1.4}}>{e.description}</div>}
-        </div>
-        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-            <button onClick={()=>onEdit(e)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'var(--text-muted)',cursor:'pointer',fontSize:12}}>✎</button>
-            <button onClick={()=>setCf(true)} className="tap" style={{padding:'5px 7px',borderRadius:6,border:'none',background:'rgba(255,255,255,.06)',color:'rgba(248,113,113,.5)',cursor:'pointer',fontSize:12}}>✕</button>
-        </div>
-    </div>);
-}
-
-function AdminPanel({onLogout,onBack}){
-    const[section,setSection]=useState('hours');
-    const[view,setView]=useState('dashboard');const[year,setYear]=useState(new Date().getFullYear());
-    const[data,setData]=useState(null);const[loading,setLoading]=useState(true);
-    const[edit,setEdit]=useState(null);const[fCat,setFCat]=useState('all');const[fProp,setFProp]=useState('all');
-
+// ── Admin Panel ──
+function AdminPanel({onLogout,onBack}){const[section,setSection]=useState('hours');const[view,setView]=useState('dashboard');const[year,setYear]=useState(new Date().getFullYear());const[data,setData]=useState(null);const[ld,setLd]=useState(true);const[edit,setEdit]=useState(null);const[fCat,setFCat]=useState('all');const[fProp,setFProp]=useState('all');
     useEffect(()=>{document.body.classList.add('admin-mode');return()=>document.body.classList.remove('admin-mode')},[]);
-    const fetch_=useCallback(async()=>{setLoading(true);const r=await api(`entries?year=${year}`);if(r)setData(r);setLoading(false)},[year]);
+    const fetch_=useCallback(async()=>{setLd(true);const r=await api(`entries?year=${year}`);if(r)setData(r);setLd(false)},[year]);
     useEffect(()=>{fetch_()},[fetch_]);
-
-    const sm=data?.summary||{total_hours:0,total_entries:0,unique_days:0,total_mileage:0};
-    const th=parseFloat(sm.total_hours)||0;const entries=data?.entries||[];const monthly=data?.monthly||[];
-    const cats=data?.categories||[];const props=data?.properties||[];
-    const filtered=entries.filter(e=>fCat==='all'||e.category===fCat).filter(e=>fProp==='all'||e.property===fProp);
-    const filtH=filtered.reduce((s,e)=>s+parseFloat(e.hours),0);
-
-    const save=async()=>{setEdit(null);setView('dashboard');await fetch_()};
-    const del=async id=>{await api(`entries/${id}`,{method:'DELETE'});await fetch_()};
+    const sm=data?.summary||{total_hours:0,total_entries:0,unique_days:0,total_mileage:0};const th=parseFloat(sm.total_hours)||0;const entries=data?.entries||[];const monthly=data?.monthly||[];const cats=data?.categories||[];const props=data?.properties||[];
+    const filtered=entries.filter(e=>fCat==='all'||e.category===fCat).filter(e=>fProp==='all'||e.property===fProp);const filtH=filtered.reduce((s,e)=>s+parseFloat(e.hours),0);
+    const save=async()=>{setEdit(null);setView('dashboard');await fetch_()};const del=async id=>{await api(`entries/${id}`,{method:'DELETE'});await fetch_()};
     const exp=()=>{const t=getToken();fetch(`${API}/export?year=${year}`,{headers:{Authorization:`Bearer ${t}`}}).then(r=>r.blob()).then(b=>{const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`REP_Hours_${year}.csv`;a.click();URL.revokeObjectURL(u)})};
-
-    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};
-    const TL={fontSize:11,color:'var(--text-muted)',marginBottom:12,letterSpacing:1,textTransform:'uppercase'};
-    const hourNav=[{id:'dashboard',label:'Dashboard',icon:'📊'},{id:'add',label:'Log',icon:'➕'},{id:'history',label:'History',icon:'📜'},{id:'breakdown',label:'Stats',icon:'📈'}];
+    const CS={background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',padding:20};const TL={fontSize:11,color:'var(--text-muted)',marginBottom:12,letterSpacing:1,textTransform:'uppercase'};
+    const hourNav=[{id:'dashboard',label:'Dashboard',icon:'📊'},{id:'add',label:'Log',icon:'➕'},{id:'import',label:'Import',icon:'📤'},{id:'history',label:'History',icon:'📜'},{id:'breakdown',label:'Stats',icon:'📈'}];
     const sections=[{id:'hours',label:'REP Hours',icon:'⏱️'},{id:'photos',label:'Photos',icon:'📸'},{id:'expenses',label:'Expenses',icon:'💰'}];
 
     return(<div style={{height:'100vh',display:'flex',flexDirection:'column',maxWidth:600,margin:'0 auto'}}>
-        {/* Admin Header */}
         <div style={{padding:'12px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-            <div style={{display:'flex',alignItems:'center',gap:12}}>
-                <button onClick={onBack} className="tap" style={{background:'none',border:'none',color:'var(--text-muted)',cursor:'pointer',fontSize:18,padding:0}}>←</button>
-                <div><h1 style={{fontSize:17,fontWeight:700,letterSpacing:-.5,margin:0,color:'var(--text)'}}>Admin Panel</h1>
-                    <span style={{fontSize:10,color:'var(--text-faint)',letterSpacing:1.5,textTransform:'uppercase'}}>Colletti Coastal Properties</span></div>
-            </div>
+            <div style={{display:'flex',alignItems:'center',gap:12}}><button onClick={onBack} className="tap" style={{background:'none',border:'none',color:'var(--text-muted)',cursor:'pointer',fontSize:18,padding:0}}>←</button>
+                <div><h1 style={{fontSize:17,fontWeight:700,letterSpacing:-.5,margin:0,color:'var(--text)'}}>Admin Panel</h1><span style={{fontSize:10,color:'var(--text-faint)',letterSpacing:1.5,textTransform:'uppercase'}}>Colletti Coastal Properties</span></div></div>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
-                {section==='hours'&&<>
-                    <button onClick={()=>setYear(y=>y-1)} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>‹</button>
-                    <span style={{fontFamily:'var(--mono)',fontSize:14,fontWeight:700,minWidth:44,textAlign:'center',color:'var(--text)'}}>{year}</span>
-                    <button onClick={()=>setYear(y=>y+1)} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>›</button>
-                </>}
-                <button onClick={()=>{onLogout();clearToken()}} className="tap" style={{marginLeft:8,background:'none',border:'none',color:'var(--text-faint)',cursor:'pointer',fontSize:12,fontFamily:'var(--font)'}}>Sign out</button>
-            </div>
-        </div>
-
-        {/* Section Tabs */}
-        <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-            {sections.map(s=><button key={s.id} onClick={()=>setSection(s.id)} className="tap" style={{flex:1,padding:'12px 8px',border:'none',
-                background:section===s.id?'rgba(99,102,241,.08)':'transparent',color:section===s.id?'var(--accent-soft)':'var(--text-muted)',
-                fontSize:12,fontWeight:section===s.id?600:400,cursor:'pointer',fontFamily:'var(--font)',
-                borderBottom:section===s.id?'2px solid var(--accent)':'2px solid transparent',transition:'all .2s',
-                display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-                <span>{s.icon}</span>{s.label}</button>)}
-        </div>
-
-        {/* Section Content */}
+                {section==='hours'&&<><button onClick={()=>setYear(y=>y-1)} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>‹</button><span style={{fontFamily:'var(--mono)',fontSize:14,fontWeight:700,minWidth:44,textAlign:'center',color:'var(--text)'}}>{year}</span><button onClick={()=>setYear(y=>y+1)} className="tap" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-dim)',borderRadius:7,padding:'4px 10px',cursor:'pointer',fontSize:15}}>›</button></>}
+                <button onClick={()=>{onLogout();clearToken()}} className="tap" style={{marginLeft:8,background:'none',border:'none',color:'var(--text-faint)',cursor:'pointer',fontSize:12,fontFamily:'var(--font)'}}>Sign out</button></div></div>
+        <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>{sections.map(s=><button key={s.id} onClick={()=>setSection(s.id)} className="tap" style={{flex:1,padding:'12px 8px',border:'none',background:section===s.id?'rgba(99,102,241,.08)':'transparent',color:section===s.id?'var(--accent-soft)':'var(--text-muted)',fontSize:12,fontWeight:section===s.id?600:400,cursor:'pointer',fontFamily:'var(--font)',borderBottom:section===s.id?'2px solid var(--accent)':'2px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}><span>{s.icon}</span>{s.label}</button>)}</div>
         <div style={{flex:1,overflowY:'auto',padding:'16px 16px 0',paddingBottom:section==='hours'?80:20}}>
-            {section==='hours'&&<>
-                {loading&&!data?<div style={{textAlign:'center',padding:60,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading…</div>:<>
+            {section==='hours'&&<>{ld&&!data?<div style={{textAlign:'center',padding:60,color:'var(--text-muted)',animation:'pulse 1.5s infinite'}}>Loading…</div>:<>
                 {view==='dashboard'&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
-                    <div className="fu" style={CS}><Ring cur={th} goal={GOAL} year={year}/>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:18,textAlign:'center'}}>
-                            {[{v:sm.unique_days,l:'Days'},{v:sm.total_entries,l:'Entries'},{v:parseFloat(sm.total_mileage)>0?Number(sm.total_mileage).toLocaleString():'—',l:'Miles'}].map((s,i)=>
-                                <div key={i}><div style={{fontFamily:'var(--mono)',fontSize:20,fontWeight:700,color:'var(--text)'}}>{s.v}</div><div style={{fontSize:11,color:'var(--text-muted)'}}>{s.l}</div></div>)}</div></div>
+                    <div className="fu" style={CS}><Ring cur={th} goal={GOAL} year={year}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:18,textAlign:'center'}}>{[{v:sm.unique_days,l:'Days'},{v:sm.total_entries,l:'Entries'},{v:parseFloat(sm.total_mileage)>0?Number(sm.total_mileage).toLocaleString():'—',l:'Miles'}].map((s,i)=><div key={i}><div style={{fontFamily:'var(--mono)',fontSize:20,fontWeight:700,color:'var(--text)'}}>{s.v}</div><div style={{fontSize:11,color:'var(--text-muted)'}}>{s.l}</div></div>)}</div></div>
                     <div className="fu fu1" style={CS}><div style={TL}>Monthly Distribution</div><MChart monthly={monthly}/></div>
-                    {cats.length>0&&<div className="fu fu2" style={CS}><div style={TL}>Top Categories</div>
-                        {cats.slice(0,5).map(c=>{const ct=CATS.find(x=>x.id===c.category);return(<div key={c.category} style={{display:'flex',alignItems:'center',gap:10,marginBottom:11}}>
-                            <span style={{fontSize:16,flexShrink:0}}>{ct?.icon||'📝'}</span><div style={{flex:1}}>
-                            <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}>
-                                <span style={{color:'var(--text-dim)'}}>{ct?.label||c.category}</span>
-                                <span style={{fontFamily:'var(--mono)',color:'var(--accent-soft)',fontWeight:600,fontSize:12}}>{fmtH(parseFloat(c.total))}</span></div>
-                            <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,.04)'}}><div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',width:`${(parseFloat(c.total)/th)*100}%`,transition:'width .5s ease'}}/></div></div></div>)})}</div>}
-                    <button onClick={exp} className="tap fu fu3" style={{width:'100%',padding:13,borderRadius:12,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text-dim)',fontSize:14,cursor:'pointer',fontWeight:500,fontFamily:'var(--font)'}}>
-                        📥 Export {year} CSV</button></div>}
+                    {cats.length>0&&<div className="fu fu2" style={CS}><div style={TL}>Top Categories</div>{cats.slice(0,5).map(c=>{const ct=CATS.find(x=>x.id===c.category);return(<div key={c.category} style={{display:'flex',alignItems:'center',gap:10,marginBottom:11}}><span style={{fontSize:16,flexShrink:0}}>{ct?.icon||'📝'}</span><div style={{flex:1}}><div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}><span style={{color:'var(--text-dim)'}}>{ct?.label||c.category}</span><span style={{fontFamily:'var(--mono)',color:'var(--accent-soft)',fontWeight:600,fontSize:12}}>{fmtH(parseFloat(c.total))}</span></div><div style={{height:4,borderRadius:2,background:'rgba(255,255,255,.04)'}}><div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',width:`${(parseFloat(c.total)/th)*100}%`}}/></div></div></div>)})}</div>}
+                    <button onClick={exp} className="tap fu fu3" style={{width:'100%',padding:13,borderRadius:12,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text-dim)',fontSize:14,cursor:'pointer',fontWeight:500,fontFamily:'var(--font)'}}>📥 Export {year} CSV</button></div>}
                 {view==='add'&&<EForm onSave={save} edit={edit} onCancel={()=>{setEdit(null);setView('dashboard')}}/>}
+                {view==='import'&&<CSVUpload type="entries" onUpload={fetch_} templateCols="Date, Hours, Category, Property, Description, Mileage"/>}
                 {view==='history'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
-                    <div style={{display:'flex',gap:8}}>
-                        <select value={fCat} onChange={e=>setFCat(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>
-                            <option value="all">All Categories</option>{CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}</select>
-                        <select value={fProp} onChange={e=>setFProp(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>
-                            {PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+                    <div style={{display:'flex',gap:8}}><select value={fCat} onChange={e=>setFCat(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}><option value="all">All Categories</option>{CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}</select>
+                        <select value={fProp} onChange={e=>setFProp(e.target.value)} style={{flex:1,padding:'9px 10px',borderRadius:9,border:'1px solid var(--border-light)',background:'var(--bg-card)',color:'var(--text)',fontSize:13,fontFamily:'var(--font)'}}>{PROPS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
                     <div style={{fontSize:12,color:'var(--text-faint)',padding:'0 2px'}}>{filtered.length} entries · {fmtH(filtH)} total</div>
-                    {filtered.length===0?<div className="fu" style={{textAlign:'center',padding:50,color:'var(--text-faint)'}}>No entries yet</div>
-                    :filtered.map(e=><ERow key={e.id} e={e} onEdit={en=>{setEdit(en);setView('add')}} onDel={del}/>)}</div>}
+                    {filtered.length===0?<div className="fu" style={{textAlign:'center',padding:50,color:'var(--text-faint)'}}>No entries</div>:filtered.map(e=><ERow key={e.id} e={e} onEdit={en=>{setEdit(en);setView('add')}} onDel={del}/>)}</div>}
                 {view==='breakdown'&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
                     {cats.length===0?<div className="fu" style={{textAlign:'center',padding:50,color:'var(--text-faint)'}}>No data</div>:<>
-                    <div className="fu" style={CS}><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Category Breakdown — {year}</div>
-                        {cats.map(c=>{const ct=CATS.find(x=>x.id===c.category);return(<div key={c.category} style={{marginBottom:16}}>
-                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-                                <span style={{fontSize:13,color:'var(--text-dim)'}}>{ct?.icon} {ct?.label||c.category}</span>
-                                <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:700,color:'var(--accent-soft)'}}>{fmtH(parseFloat(c.total))}</span></div>
-                            <div style={{height:8,borderRadius:4,background:'rgba(255,255,255,.04)'}}><div style={{height:'100%',borderRadius:4,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',width:`${(parseFloat(c.total)/parseFloat(cats[0].total))*100}%`}}/></div>
-                            <div style={{fontSize:11,color:'var(--text-faint)',marginTop:3}}>{((parseFloat(c.total)/th)*100).toFixed(1)}% · {c.entry_count} entries</div></div>)})}</div>
-                    <div className="fu fu1" style={CS}><div style={{fontSize:14,fontWeight:600,marginBottom:14}}>By Property</div>
-                        {props.map(p=>{const pr=PROPS.find(x=>x.id===p.property);return(<div key={p.property} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)'}}>
-                            <span style={{fontSize:13,color:'var(--text-dim)'}}>{pr?.label||p.property}</span>
-                            <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600,color:'var(--accent-soft)'}}>{fmtH(parseFloat(p.total))}</span></div>)})}</div></>}</div>}
-                </>}
-            </>}
+                    <div className="fu" style={CS}><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Category Breakdown — {year}</div>{cats.map(c=>{const ct=CATS.find(x=>x.id===c.category);return(<div key={c.category} style={{marginBottom:16}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><span style={{fontSize:13,color:'var(--text-dim)'}}>{ct?.icon} {ct?.label||c.category}</span><span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:700,color:'var(--accent-soft)'}}>{fmtH(parseFloat(c.total))}</span></div><div style={{height:8,borderRadius:4,background:'rgba(255,255,255,.04)'}}><div style={{height:'100%',borderRadius:4,background:'linear-gradient(90deg,var(--accent),var(--accent-light))',width:`${(parseFloat(c.total)/parseFloat(cats[0].total))*100}%`}}/></div><div style={{fontSize:11,color:'var(--text-faint)',marginTop:3}}>{((parseFloat(c.total)/th)*100).toFixed(1)}% · {c.entry_count} entries</div></div>)})}</div>
+                    <div className="fu fu1" style={CS}><div style={{fontSize:14,fontWeight:600,marginBottom:14}}>By Property</div>{props.map(p=>{const pr=PROPS.find(x=>x.id===p.property);return(<div key={p.property} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)'}}><span style={{fontSize:13,color:'var(--text-dim)'}}>{pr?.label||p.property}</span><span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600,color:'var(--accent-soft)'}}>{fmtH(parseFloat(p.total))}</span></div>)})}</div></>}</div>}
+            </>}</>}
             {section==='photos'&&<PhotoManager/>}
             {section==='expenses'&&<ExpenseTracker year={year}/>}
         </div>
+        {section==='hours'&&<div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:600,display:'flex',background:'rgba(12,12,20,.92)',backdropFilter:'blur(24px)',borderTop:'1px solid var(--border)',padding:'8px 0 calc(8px + env(safe-area-inset-bottom,0px))',zIndex:100}}>
+            {hourNav.map(n=><button key={n.id} onClick={()=>{setView(n.id);if(n.id!=='add')setEdit(null);if(n.id==='dashboard'||n.id==='history')fetch_()}} className="tap" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'6px 4px',border:'none',background:'transparent',cursor:'pointer',color:view===n.id?'var(--accent-soft)':'var(--text-faint)',fontFamily:'var(--font)'}}><span style={{fontSize:18}}>{n.icon}</span><span style={{fontSize:9,fontWeight:view===n.id?600:400}}>{n.label}</span></button>)}</div>}
+    </div>)}
 
-        {/* Hours sub-nav (only shown in hours section) */}
-        {section==='hours'&&<div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:600,display:'flex',
-            background:'rgba(12,12,20,.92)',backdropFilter:'blur(24px)',borderTop:'1px solid var(--border)',
-            padding:'8px 0 calc(8px + env(safe-area-inset-bottom,0px))',zIndex:100}}>
-            {hourNav.map(n=><button key={n.id} onClick={()=>{setView(n.id);if(n.id!=='add')setEdit(null);if(n.id==='dashboard'||n.id==='history')fetch_()}} className="tap"
-                style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'6px 4px',border:'none',background:'transparent',cursor:'pointer',
-                    color:view===n.id?'var(--accent-soft)':'var(--text-faint)',transition:'color .15s',fontFamily:'var(--font)'}}>
-                <span style={{fontSize:20}}>{n.icon}</span><span style={{fontSize:10,fontWeight:view===n.id?600:400}}>{n.label}</span>
-            </button>)}
-        </div>}
-    </div>);
-}
-
-// ══════════════════════════════════════════════════
-// ROOT APP — Routes between public site and admin
-// ══════════════════════════════════════════════════
-function App(){
-    const[mode,setMode]=useState('public'); // 'public' | 'login' | 'admin'
-    const authed=!!getToken();
-
-    const goAdmin=()=>{if(authed){setMode('admin')}else{setMode('login')}};
-    const goPublic=()=>{setMode('public');document.body.classList.remove('admin-mode')};
-
-    return(<>
-        {mode==='public'&&<PublicSite onAdmin={goAdmin}/>}
-        {mode==='login'&&<AdminLogin onLogin={()=>setMode('admin')}/>}
-        {mode==='admin'&&(authed?<AdminPanel onLogout={()=>setMode('public')} onBack={goPublic}/>:<AdminLogin onLogin={()=>setMode('admin')}/>)}
-    </>);
-}
-
+// ── Root App ──
+function App(){const[mode,setMode]=useState('public');const authed=!!getToken();
+    const goAdmin=()=>{if(authed)setMode('admin');else setMode('login')};const goPublic=()=>{setMode('public');document.body.classList.remove('admin-mode')};
+    return(<>{mode==='public'&&<PublicSite onAdmin={goAdmin}/>}{mode==='login'&&<AdminLogin onLogin={()=>setMode('admin')}/>}{mode==='admin'&&(authed?<AdminPanel onLogout={()=>setMode('public')} onBack={goPublic}/>:<AdminLogin onLogin={()=>setMode('admin')}/>)}</>)}
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
