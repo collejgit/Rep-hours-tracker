@@ -556,5 +556,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Colletti Coastal Properties running on port ${PORT}`);
+  console.log(`JM Covenant Properties LLC running on port ${PORT}`);
 });
