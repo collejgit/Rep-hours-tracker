@@ -267,6 +267,55 @@ app.get('/api/export', authenticate, (req, res) => {
   res.send(rows.join('\n'));
 });
 
+// Date normalizer: handles M/D/YYYY, MM/DD/YYYY, YYYY-MM-DD, M-D-YYYY
+function normalizeDate(raw) {
+  if (!raw) return null;
+  const s = raw.trim();
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // M/D/YYYY or MM/DD/YYYY (with / or -)
+  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  // Try JS Date parse as fallback
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  return null;
+}
+
+// Smart category mapper for REP hours — matches keywords
+function mapEntryCategory(raw) {
+  const s = (raw || '').toLowerCase();
+  const exact = {
+    'property management':'property_mgmt','repairs & maintenance':'repairs','construction / improvements':'construction',
+    'travel (nj to nc)':'travel','travel (nj ↔ nc)':'travel','booking & guest mgmt':'bookings','records & accounting':'records',
+    'cleaning & turnover':'cleaning','calls / emails / texts':'communication','shopping for properties':'shopping',
+    'inspections & walkthroughs':'inspection','other re activity':'other',
+  };
+  if (exact[s]) return exact[s];
+  // Keyword matching
+  if (/repair|maintenance|fix|plumb|hvac|leak|replace/.test(s)) return 'repairs';
+  if (/construct|renovation|paver|remodel|improv|upgrade|install/.test(s)) return 'construction';
+  if (/travel|drive|trip|mileage/.test(s)) return 'travel';
+  if (/book|guest|reserv|twiddy|listing/.test(s)) return 'bookings';
+  if (/record|account|admin|tax|financ|budget/.test(s)) return 'records';
+  if (/clean|turnover|laundry/.test(s)) return 'cleaning';
+  if (/call|email|text|phone|communicat|coordinat/.test(s)) return 'communication';
+  if (/shop|purchas|buy|supply|order/.test(s)) return 'shopping';
+  if (/inspect|walkthrough|check|inventory/.test(s)) return 'inspection';
+  if (/manag|property|oversee|review|identify/.test(s)) return 'property_mgmt';
+  return 'other';
+}
+
+// Smart property mapper
+function mapProperty(raw) {
+  const s = (raw || '').toLowerCase().trim();
+  if (!s || s === 'all' || s === 'all properties') return 'all';
+  if (/salt\s*house/.test(s) || /e248/.test(s) || /pine island/.test(s) || /corolla/.test(s) && /salt/.test(s)) return 'salt_house';
+  if (/kdh/.test(s) || /kill devil/.test(s) || /kd1003/.test(s) || /c dolphin/.test(s)) return 'kdh';
+  if (/lighthouse/.test(s) || /light began/.test(s) || /j10925/.test(s) || /whalehead/.test(s)) return 'lighthouse';
+  return 'all';
+}
+
 // POST /api/entries/import — Bulk CSV upload for REP hours
 app.post('/api/entries/import', authenticate, (req, res) => {
   const { csv } = req.body;
@@ -275,13 +324,6 @@ app.post('/api/entries/import', authenticate, (req, res) => {
   if (rows.length === 0) return res.status(400).json({ error: 'No valid rows found' });
   if (rows.length > 2000) return res.status(400).json({ error: 'Maximum 2000 rows per upload' });
 
-  // Reverse map labels to IDs
-  const catMap = { 'property management':'property_mgmt','repairs & maintenance':'repairs','construction / improvements':'construction',
-    'travel (nj to nc)':'travel','travel (nj ↔ nc)':'travel','booking & guest mgmt':'bookings','records & accounting':'records',
-    'cleaning & turnover':'cleaning','calls / emails / texts':'communication','shopping for properties':'shopping',
-    'inspections & walkthroughs':'inspection','other re activity':'other' };
-  const propMap = { 'all properties':'all','salt house':'salt_house','kdh':'kdh','lighthouse':'lighthouse' };
-
   const stmt = db.prepare('INSERT INTO entries (entry_date, hours, minutes, category, property, description, mileage) VALUES (?, ?, ?, ?, ?, ?, ?)');
   let imported = 0, skipped = 0, errors = [];
 
@@ -289,13 +331,11 @@ app.post('/api/entries/import', authenticate, (req, res) => {
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       try {
-        const date = r.date || '';
+        const date = normalizeDate(r.date);
         const hours = parseFloat(r.hours || '0');
-        if (!date || hours <= 0) { skipped++; continue; }
-        const catRaw = (r.category || '').toLowerCase();
-        const category = catMap[catRaw] || catRaw.replace(/[^a-z_]/g, '_') || 'other';
-        const propRaw = (r.property || '').toLowerCase();
-        const property = propMap[propRaw] || propRaw.replace(/[^a-z_]/g, '_') || 'all';
+        if (!date || hours <= 0) { skipped++; errors.push(`Row ${i+2}: Invalid date "${r.date}" or hours`); continue; }
+        const category = mapEntryCategory(r.category);
+        const property = mapProperty(r.property);
         const description = r.description || '';
         const mileage = r.mileage ? parseFloat(r.mileage) : null;
         const mins = Math.round((hours - Math.floor(hours)) * 60);
@@ -306,6 +346,12 @@ app.post('/api/entries/import', authenticate, (req, res) => {
   });
   tx();
   res.json({ success: true, imported, skipped, total: rows.length, errors: errors.slice(0, 10) });
+});
+
+// DELETE /api/entries/cleanup — Remove entries with invalid dates (from bad imports)
+app.delete('/api/entries/cleanup', authenticate, (req, res) => {
+  const result = db.prepare("DELETE FROM entries WHERE entry_date NOT LIKE '____-__-__'").run();
+  res.json({ success: true, deleted: result.changes });
 });
 
 // ══════════════════════════════════════════════════
@@ -505,7 +551,6 @@ app.post('/api/expenses/import', authenticate, (req, res) => {
     'utilities':'utilities','insurance':'insurance','property taxes':'taxes','management fees':'management',
     'cleaning & turnover':'cleaning','travel':'travel','furnishing & decor':'furnishing','landscaping':'landscaping',
     'legal & professional':'legal','marketing & advertising':'marketing','mortgage interest':'mortgage','other':'other' };
-  const propMap = { 'all properties':'all','salt house':'salt_house','kdh':'kdh','lighthouse':'lighthouse' };
 
   const stmt = db.prepare('INSERT INTO expenses (expense_date, amount, category, property, vendor, description) VALUES (?, ?, ?, ?, ?, ?)');
   let imported = 0, skipped = 0, errors = [];
@@ -514,13 +559,12 @@ app.post('/api/expenses/import', authenticate, (req, res) => {
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       try {
-        const date = r.date || '';
-        const amount = parseFloat(r.amount?.replace(/[$,]/g, '') || '0');
-        if (!date || amount <= 0) { skipped++; continue; }
+        const date = normalizeDate(r.date);
+        const amount = parseFloat((r.amount || '').replace(/[$,]/g, '') || '0');
+        if (!date || amount <= 0) { skipped++; errors.push(`Row ${i+2}: Invalid date "${r.date}" or amount`); continue; }
         const catRaw = (r.category || '').toLowerCase();
         const category = catMap[catRaw] || catRaw.replace(/[^a-z_]/g, '_') || 'other';
-        const propRaw = (r.property || '').toLowerCase();
-        const property = propMap[propRaw] || propRaw.replace(/[^a-z_]/g, '_') || 'all';
+        const property = mapProperty(r.property);
         const vendor = r.vendor || '';
         const description = r.description || '';
         stmt.run(date, amount, category, property, vendor, description);
@@ -530,6 +574,12 @@ app.post('/api/expenses/import', authenticate, (req, res) => {
   });
   tx();
   res.json({ success: true, imported, skipped, total: rows.length, errors: errors.slice(0, 10) });
+});
+
+// DELETE /api/expenses/cleanup — Remove expenses with invalid dates
+app.delete('/api/expenses/cleanup', authenticate, (req, res) => {
+  const result = db.prepare("DELETE FROM expenses WHERE expense_date NOT LIKE '____-__-__'").run();
+  res.json({ success: true, deleted: result.changes });
 });
 
 app.get('/api/expenses/export', authenticate, (req, res) => {
